@@ -30,7 +30,7 @@ int main(void)
         print_bin_rep(x);
         print_bin_rep(y);
 
-        x = (0xFF00FFFFu & x) | ((0x000000FFu & y) << 16);
+        x = (0xFF00FFFFu & x) | ((0xFFu & y) << 16);
 
         print_bin_rep(x);
     }
