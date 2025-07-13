@@ -131,10 +131,7 @@ int add_abonent(struct abonent *head)
 {
     struct abonent *ab = insert_node(head);
     if (!ab)
-    {
-        cleanup(head);
-        exit(1);
-    }
+        return 1;
     ab->id = generate_id();
     printf("Enter a name: ");
     scanf("%s", ab->name);
@@ -153,8 +150,6 @@ int remove_abonent(struct abonent *head, unsigned long id)
     erase_node(cur);
     return 0;
 }
-
-
 
 void test_linked_list(void)
 {
@@ -207,71 +202,69 @@ void test1(void)
         printf("/----------/\n");
         print_found(head.next, &head, "N");
         printf("/----------/\n");
-        
+
         remove_abonent(&head, head.prev->id);
         remove_abonent(&head, head.prev->id);
         remove_abonent(&head, head.next->id);
 
         print_all(head.next, &head);
-        
-        cleanup(&head);
 
+        cleanup(&head);
     }
 }
 
 int main(void)
 {
+    // test_linked_list();
+    // test1();
 
-    test_linked_list();
-    test1();
-    // struct abonent head;
-    // head.prev = &head;
-    // head.next = &head;
-    // head.id = 0;
-    // char name[10];
-    // int id;
-    // int option = 0;
+    struct abonent book;
+    book.prev = &book;
+    book.next = &book;
+    book.id = 0;
+    char name[10];
+    unsigned long id;
+    int option = 0;
 
-    // while (1)
-    // {
-    //     print_prompt();
+    while (1)
+    {
+        print_prompt();
 
-    //     if (scanf("%d", &option) != 1)
-    //     {
-    //         printf("Bad input.\n");
-    //         return 1;
-    //     }
+        if (scanf("%d", &option) != 1)
+        {
+            printf("Bad input.\n");
+            cleanup(&book);
+            return 1;
+        }
 
-    //     switch (option)
-    //     {
-    //     case 1:
-    //         if (add_abonent(book))
-    //             printf("Cannot add a new contact. "
-    //                    "The phone book is full.\n");
-    //         break;
-    //     case 2:
-    //         printf("Enter id: ");
-    //         scanf("%d", &id);
-    //         if (id < N)
-    //             remove_abonent(book, id);
-    //         else
-    //             printf("Bad id.\n");
-    //         break;
-    //     case 3:
-    //         printf("Enter a name: ");
-    //         scanf("%s", name);
-    //         print_found(book, book + N, name);
-    //         break;
-    //     case 4:
-    //         print_all(book, book + N);
-    //         break;
-    //     case 5:
-    //         return 0;
-    //     default:
-    //         perror("Error.\n");
-    //         exit(1);
-    //     }
-    // }
+        switch (option)
+        {
+        case 1:
+            if (add_abonent(&book))
+                printf("Cannot add a new contact. "
+                       "The phone book is full.\n");
+            break;
+        case 2:
+            printf("Enter id: ");
+            scanf("%lu", &id);
+            if (remove_abonent(&book, id))
+                printf("Bad id.\n");
+            break;
+        case 3:
+            printf("Enter a name: ");
+            scanf("%s", name);
+            print_found(book.next, &book, name);
+            break;
+        case 4:
+            print_all(book.next, &book);
+            break;
+        case 5:
+            cleanup(&book);
+            return 0;
+        default:
+            printf("Bad input.\n");
+        }
+    }
 
     return 0;
 }
