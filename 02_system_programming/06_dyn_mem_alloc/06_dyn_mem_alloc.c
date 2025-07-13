@@ -119,6 +119,11 @@ void print_found(struct abonent *begin, struct abonent *end, char *name)
 
 void print_all(struct abonent *begin, struct abonent *end)
 {
+    if (begin == end)
+    {
+        printf("Nothing to print.\n");
+        return;
+    }
     struct abonent *cur = begin;
     while (cur != end)
     {
