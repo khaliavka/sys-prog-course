@@ -185,8 +185,11 @@ int test1_add_abonent(struct abonent *head)
     }
     ab->id = generate_id();
     ab->name[0] = 'N';
+    ab->name[1] = 0;
     ab->second_name[0] = 'S';
+    ab->second_name[1] = 0;
     ab->tel[0] = '4';
+    ab->tel[1] = 0;
     return 0;
 }
 
@@ -223,6 +226,7 @@ int main(void)
     // test_linked_list();
     // test1();
 
+    
     struct abonent book;
     book.prev = &book;
     book.next = &book;
@@ -230,9 +234,8 @@ int main(void)
     char name[10];
     unsigned long id;
     int option = 0;
-
-    while (1)
-    {
+while (1)
+{
         print_prompt();
 
         if (scanf("%d", &option) != 1)
@@ -241,35 +244,36 @@ int main(void)
             cleanup(&book);
             return 1;
         }
-
+        
         switch (option)
         {
-        case 1:
+            case 1:
             if (add_abonent(&book))
-                printf("Cannot add a new contact. "
-                       "The phone book is full.\n");
+            printf("Cannot add a new contact. "
+            "The phone book is full.\n");
             break;
-        case 2:
+            case 2:
             printf("Enter id: ");
             scanf("%lu", &id);
             if (remove_abonent(&book, id))
-                printf("Bad id.\n");
+            printf("Bad id.\n");
             break;
-        case 3:
+            case 3:
             printf("Enter a name: ");
             scanf("%s", name);
             print_found(book.next, &book, name);
             break;
-        case 4:
+            case 4:
             print_all(book.next, &book);
             break;
-        case 5:
+            case 5:
             cleanup(&book);
             return 0;
-        default:
+            default:
             printf("Bad input.\n");
         }
     }
+    
 
     return 0;
 }
