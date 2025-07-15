@@ -13,16 +13,16 @@ libcalc.so: add.o sub.o mul.o div.o
 	gcc -shared $^ -o $@ 
 
 add.o: add.c
-	gcc -c -o $@ $<
+	gcc -c -fPIC -o $@ $<
 
 sub.o: sub.c
-	gcc -c -o $@ $<
+	gcc -c -fPIC -o $@ $<
 
 mul.o: mul.c
-	gcc -c -o $@ $<
+	gcc -c -fPIC -o $@ $<
 
 div.o: div.c
-	gcc -c -o $@ $<
+	gcc -c -fPIC -o $@ $<
 
 clean:
 	rm -f *.o *.so $(TARGET)
