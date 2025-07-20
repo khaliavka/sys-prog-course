@@ -54,7 +54,7 @@ struct abonent *next(struct abonent *node)
 
 unsigned long generate_id(void)
 {
-    static unsigned long id = 1;
+    static unsigned long id = 0;
     return id++;
 }
 
@@ -229,7 +229,7 @@ int main(void)
     struct abonent book;
     book.prev = &book;
     book.next = &book;
-    book.id = 0;
+    book.id = generate_id();
     char name[10];
     unsigned long id;
     int option = 0;
