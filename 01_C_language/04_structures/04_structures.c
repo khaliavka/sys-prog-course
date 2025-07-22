@@ -86,11 +86,11 @@ int add_abonent(struct abonent *book)
     if (!free_record)
         return 1;
     printf("Enter a name: ");
-    scanf("%s", free_record->name);
+    scanf("%9s", free_record->name);
     printf("Enter second name: ");
-    scanf("%s", free_record->second_name);
+    scanf("%9s", free_record->second_name);
     printf("Enter a phone number: ");
-    scanf("%s", free_record->tel);
+    scanf("%9s", free_record->tel);
     return 0;
 }
 

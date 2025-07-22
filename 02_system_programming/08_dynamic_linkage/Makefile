@@ -1,5 +1,7 @@
 TARGET = main
 
+.PHONY: run clean clean2
+
 run: $(TARGET)
 	LD_LIBRARY_PATH=$$PWD:$$LD_LIBRARY_PATH ./$(TARGET)
 

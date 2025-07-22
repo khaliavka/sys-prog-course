@@ -139,11 +139,11 @@ int add_abonent(struct abonent *head)
         return 1;
     ab->id = generate_id();
     printf("Enter a name: ");
-    scanf("%s", ab->name);
+    scanf("%9s", ab->name);
     printf("Enter second name: ");
-    scanf("%s", ab->second_name);
+    scanf("%9s", ab->second_name);
     printf("Enter a phone number: ");
-    scanf("%s", ab->tel);
+    scanf("%9s", ab->tel);
     return 0;
 }
 
@@ -259,7 +259,7 @@ int main(void)
             break;
         case 3:
             printf("Enter a name: ");
-            scanf("%s", name);
+            scanf("%9s", name);
             print_found(book.next, &book, name);
             break;
         case 4:

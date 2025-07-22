@@ -1,5 +1,7 @@
 TARGET = main
 
+.PHONY: clean clean2
+
 $(TARGET): main.o libcalc.a
 	gcc $^ -o $@
 
