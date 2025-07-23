@@ -23,7 +23,7 @@ int read_str_reverse(const char *filename, char *buf, int count)
         return -1;
 
     // Comment: For educational purposes only.
-    // Two syscalls per iteration. (Slow!)
+    // One syscall every iteration. (Slow!)
 
     for (int i = 0; i < count; ++i)
     {
@@ -40,10 +40,10 @@ int read_str_reverse(const char *filename, char *buf, int count)
 
 void print(const char *buf, int count)
 {
-    write(0, buf, count);
+    write(STDOUT_FILENO, buf, count);
 
     const char *nl = "\n";
-    write(0, nl, 1);
+    write(STDOUT_FILENO, nl, 1);
 }
 
 int main(void)
