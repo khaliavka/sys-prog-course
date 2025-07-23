@@ -1,4 +1,4 @@
-TARGET = main
+TARGET = program
 
 .PHONY: run clean clean2
 
