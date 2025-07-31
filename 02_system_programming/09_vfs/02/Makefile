@@ -1,6 +1,6 @@
 TARGET = program
 CC = gcc
-CFLAGS =
+CFLAGS = -Wall
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.o)
 LIBS := -lncurses
@@ -10,7 +10,7 @@ LIBS := -lncurses
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $< $(LIBS) -o $@
+	$(CC) $^ $(LIBS) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

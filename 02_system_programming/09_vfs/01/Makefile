@@ -11,7 +11,7 @@ MISC := $(wildcard *.txt)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $< $(LIBS) -o $@
+	$(CC) $^ $(LIBS) -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
