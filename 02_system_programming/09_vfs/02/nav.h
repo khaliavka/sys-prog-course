@@ -9,23 +9,23 @@
 
 struct panel
 {
-  WINDOW *container;
-  WINDOW *panel;
+    WINDOW *container;
+    WINDOW *panel;
 
-  char *raw_path;
-  char *resolved_path;
-  char *prev_path;
+    char *raw_path;
+    char *resolved_path;
+    char *prev_path;
 
-  struct dirent **namelist;
-  int top;
-  int selected;
-  int sz;
+    struct dirent **namelist;
+    int top;
+    int selected;
+    int sz;
 };
 
 struct state
 {
-  struct panel panels[NPANELS];
-  int focus_index;
+    struct panel panels[NPANELS];
+    int focus_index;
 };
 
 int up_one_line(struct panel *p);
