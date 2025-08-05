@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <time.h>
+#include <sys/random.h>
 #include <unistd.h>
 
 #define ARRAY_SIZE 5
@@ -15,12 +16,29 @@
 int stores[ARRAY_SIZE];
 pthread_mutex_t mutexes[ARRAY_SIZE];
 
+void init_rand(struct drand48_data *rd)
+{
+    long seed;
+    getrandom(&seed, sizeof(seed), 0);
+    srand48_r(seed, rd);
+}
+
+long get_rand_idx(struct drand48_data *rd)
+{
+    long index;
+    lrand48_r(rd, &index);
+    return index % ARRAY_SIZE;
+}
+
 void *consumer(void *args)
 {
+    struct drand48_data rd;
+    init_rand(&rd);
     int demand = MAX_DEMAND;
+
     while (demand)
     {
-        int index = rand() % ARRAY_SIZE;
+        long index = get_rand_idx(&rd);
         int prev_demand = demand;
 
         pthread_mutex_lock(&mutexes[index]);
@@ -30,8 +48,8 @@ void *consumer(void *args)
         pthread_mutex_unlock(&mutexes[index]);
 
         demand -= amount;
-        
-        printf("consumer %d: previous demand = %d, index = %d, stock = %d, new demand = %d\n"
+
+        printf("consumer %d: previous demand = %d, index = %ld, stock = %d, new demand = %d\n"
             , *(int *)args, prev_demand, index, stock, demand);
         sleep(CONSUMER_SLEEP_TIME);
     }
@@ -41,18 +59,21 @@ void *consumer(void *args)
 void *producer(void *args)
 {
 
+    struct drand48_data rd;
+    init_rand(&rd);
+
     // this thread should be cancelled
     // by main
     while (1)
     {
-        int index = rand() % ARRAY_SIZE;
+        long index = get_rand_idx(&rd);
 
         pthread_mutex_lock(&mutexes[index]);
         int stock = stores[index];
         stores[index] += SUPPLY_BATCH;
         pthread_mutex_unlock(&mutexes[index]);
 
-        printf("producer %d: index = %d, stock = %d + %d\n", *(int *)args, index, stock, SUPPLY_BATCH);
+        printf("producer %d: index = %ld, stock = %d + %d\n", *(int *)args, index, stock, SUPPLY_BATCH);
         sleep(PRODUCER_SLEEP_TIME);
     }
     return NULL;
@@ -60,10 +81,14 @@ void *producer(void *args)
 
 void init(void)
 {
-    srand(time(NULL));
+    struct drand48_data rd;
+    init_rand(&rd);
+
     for (int i = 0; i < ARRAY_SIZE; ++i)
     {
-        stores[i] = rand() % SUPPLY_BATCH + SUPPLY_BATCH;
+        long n;
+        lrand48_r(&rd, &n);
+        stores[i] = n % SUPPLY_BATCH + SUPPLY_BATCH;
         pthread_mutex_init(&mutexes[i], NULL);
     }
 }
