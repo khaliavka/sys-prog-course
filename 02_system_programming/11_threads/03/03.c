@@ -62,7 +62,7 @@ void *producer(void *args)
     struct drand48_data rd;
     init_rand(&rd);
 
-    // this thread should be cancelled
+    // this thread must be cancelled
     // by main
     while (1)
     {
