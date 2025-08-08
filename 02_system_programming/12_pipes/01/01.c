@@ -7,9 +7,9 @@
 
 int main(void)
 {
-    int pipefd[2];
     const char msg[] = "Hi!\n";
     int msg_len = strlen(msg);
+    int pipefd[2];
     if (pipe(pipefd) == -1)
     {
         perror("pipe");
