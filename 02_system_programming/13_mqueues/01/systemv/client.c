@@ -7,10 +7,11 @@
 
 #define MSGSND_TYPE 2
 #define MSGRCV_TYPE 1
+#define BUF_SZ 256
 struct message
 {
     long mtype;
-    char mtext[256];
+    char mtext[BUF_SZ];
 };
 
 key_t get_key(void)
@@ -38,7 +39,8 @@ int main(void)
         perror("msgrcv");
         exit(EXIT_FAILURE);
     }
-    printf("%s\n", msg_rcv.mtext);
+    
+    printf("Client received: %s\n", msg_rcv.mtext);
     
     struct message msg_send = {.mtype = MSGSND_TYPE, .mtext = "Hello!"};
     if (msgsnd(msqid, &msg_send, sizeof(msg_send.mtext), 0) == -1)

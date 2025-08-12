@@ -7,10 +7,12 @@
 
 #define MSGSND_TYPE 1
 #define MSGRCV_TYPE 2
+#define BUF_SZ 256
+
 struct message
 {
     long mtype;
-    char mtext[256];
+    char mtext[BUF_SZ];
 };
 
 key_t get_key(void)
@@ -44,7 +46,9 @@ int main(void)
         perror("msgrcv");
         exit(EXIT_FAILURE);
     }
-    printf("%s\n", msg_rcv.mtext);
+
+    printf("Server received: %s\n", msg_rcv.mtext);
+    
     if (msgctl(msqid, IPC_RMID, NULL) == -1)
     {
         perror("msgctl");
