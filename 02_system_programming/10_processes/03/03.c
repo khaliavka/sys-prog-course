@@ -18,7 +18,7 @@ int main(void)
         if (fgets(line, sizeof(line), stdin) == NULL)
         {
             perror("fgets");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         line[strcspn(line, "\n")] = '\0';
@@ -26,7 +26,7 @@ int main(void)
         if (wordexp(line, &we, 0) != 0)
         {
             perror("wordexp");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         if (strncmp(we.we_wordv[0], "exit", 5) == 0)
         {
@@ -39,7 +39,7 @@ int main(void)
         {
             execvp(we.we_wordv[0], we.we_wordv);
             perror("execvp");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         wordfree(&we);
         wait(NULL);

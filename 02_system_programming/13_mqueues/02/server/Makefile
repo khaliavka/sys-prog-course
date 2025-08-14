@@ -1,10 +1,9 @@
-TARGET = client
+TARGET = server
 CC = gcc
-CFLAGS = -Wall -Wextra -MMD -MP -g
+CFLAGS = -Wall -g
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.o)
-DEPS := $(SRCS:.c=.d)
-LIBS := -lncurses
+LIBS :=
 
 .PHONY: all clean
 
@@ -15,8 +14,6 @@ $(TARGET): $(OBJS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
-
--include $(DEPS)
-
+     
 clean:
-	rm -f $(OBJS) $(DEPS) $(TARGET)
+	rm -f $(OBJS) $(TARGET)

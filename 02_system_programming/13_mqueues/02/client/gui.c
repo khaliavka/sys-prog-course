@@ -12,8 +12,6 @@
 #include "gui.h"
 #include "client.h"
 
-#define MSG_BUFSZ 281
-
 static void sig_winch(int signo)
 {
     (void)signo;
@@ -22,21 +20,19 @@ static void sig_winch(int signo)
     resizeterm(size.ws_row, size.ws_col);
 }
 
-static int draw_wnd(WINDOW **container, WINDOW **wnd, int y, int x, int rows, int cols, int color_pair)
+int draw_wnd(WINDOW **container, WINDOW **wnd, int y, int x, int rows, int cols, int color_pair)
 {
     *container = newwin(rows + 2, cols + 2, y, x);
     wattron(*container, COLOR_PAIR(color_pair));
     wbkgd(*container, COLOR_PAIR(color_pair));
     *wnd = derwin(*container, rows, cols, 1, 1);
     box(*container, ACS_VLINE, ACS_HLINE);
-
-    // mvwprintw(p->panel, i - begin, 0, pattern, item->d_name);
     wrefresh(*container);
     wrefresh(*wnd);
     return 0;
 }
 
-int init_gui(struct state *st)
+int init_gui(void)
 {
     initscr();
     signal(SIGWINCH, sig_winch);
@@ -48,76 +44,103 @@ int init_gui(struct state *st)
     set_escdelay(250);
     refresh();
     init_pair(1, COLOR_WHITE, COLOR_BLUE);
-    init_pair(2, COLOR_BLACK, COLOR_WHITE);
-
-    draw_wnd(&st->messagesw.container, &st->messagesw.wnd, 0, 0, MSGWND_ROWS, MSGWND_COLS, 1);
-    draw_wnd(&st->usersw.container, &st->usersw.wnd, 0, MSGWND_COLS + 2, USRWND_ROWS, USRWND_COLS, 1);
-    draw_wnd(&st->enterw.container, &st->enterw.wnd, MSGWND_ROWS + 2, 0, ENTRWND_ROWS, ENTRWND_COLS, 1);
+    init_pair(2, COLOR_WHITE, COLOR_RED);
     return 0;
 }
 
-int read_message(WINDOW *wnd)
+int draw_gui(struct windows *windows)
 {
-    mvwprintw(wnd, 0, 0, "Enter text: ");
-    wmove(wnd, 0, 13);
+    draw_wnd(&windows->messages.container, &windows->messages.wnd, 0, 0, MSGWND_ROWS, MSGWND_COLS, 1);
+    draw_wnd(&windows->users.container, &windows->users.wnd, 0, MSGWND_COLS + 2, USRWND_ROWS, USRWND_COLS, 1);
+    draw_wnd(&windows->input.container, &windows->input.wnd, MSGWND_ROWS + 2, 0, INPUTWND_ROWS, INPUTWND_COLS, 1);
+    print_message(windows->input.wnd, "", "Message");
+    return 0;
+}
+
+int get_box_input(int y, int x, char *buf, int sz, char *prompt)
+{
+    WINDOW *container;
+    WINDOW *wnd;
+    draw_wnd(&container, &wnd, y, x, NICKNAME_ROWS, NICKNAME_COLS + 20, 2);
+    print_message(wnd, "", prompt);
+    read_input(wnd, buf, sz, prompt);
+    delwin(wnd);
+    delwin(container);
+    return 0;
+}
+
+int refresh_windows(struct windows *win)
+{
+    werase(win->messages.container);
+    werase(win->messages.wnd);
+    werase(win->users.container);
+    werase(win->users.wnd);
+    werase(win->input.container);
+    werase(win->input.wnd);
+    box(win->messages.container, ACS_VLINE, ACS_HLINE);
+    box(win->users.container, ACS_VLINE, ACS_HLINE);
+    box(win->input.container, ACS_VLINE, ACS_HLINE);
+    print_message(win->input.wnd, "", "Message");
+    wrefresh(win->messages.container);
+    wrefresh(win->messages.wnd);
+    wrefresh(win->users.container);
+    wrefresh(win->users.wnd);
+    wrefresh(win->input.container);
+    wrefresh(win->input.wnd);
+    return 0;
+}
+
+int print_message(WINDOW *wnd, char *msg, char *prompt)
+{
+    werase(wnd);
+    mvwprintw(wnd, 0, 0, "%s: %s", prompt, msg);
     wrefresh(wnd);
-    char msg[MSG_BUFSZ] = {0};
-    int ch;
+    return 0;
+}
+
+int print_line(WINDOW *wnd, int y, int x, char *buf)
+{
+    mvwprintw(wnd, y, x, "%s", buf);
+    wrefresh(wnd);
+    return 0;
+}
+
+int read_input(WINDOW *wnd, char *msg, int sz, char *prompt)
+{
     int i = 0;
+    int ch;
     while ((ch = getch()) != '\n')
     {
         switch (ch)
         {
         case KEY_BACKSPACE:
             if (i > 0)
+            {
                 msg[--i] = '\0';
+            }
             break;
         default:
-            if (i < MSG_BUFSZ - 1)
+            if (i < sz - 1)
+            {
                 msg[i++] = (char)ch;
+                msg[i] = '\0';
+            }
             break;
         }
-        werase(wnd);
-        mvwprintw(wnd, 0, 0, "Enter text: ");
-        wmove(wnd, 0, 13);
-        mvwprintw(wnd, 0, 13, "%s", msg);
-        wrefresh(wnd);
+        print_message(wnd, msg, prompt);
     }
     return 0;
 }
 
-void cleanup(struct state *st)
+void cleanup_gui(struct windows *windows)
 {
-    delwin(st->messagesw.container);
-    delwin(st->messagesw.wnd);
-    delwin(st->usersw.container);
-    delwin(st->usersw.wnd);
-    delwin(st->enterw.container);
-    delwin(st->enterw.wnd);
+    delwin(windows->messages.container);
+    delwin(windows->messages.wnd);
+    delwin(windows->users.container);
+    delwin(windows->users.wnd);
+    delwin(windows->input.container);
+    delwin(windows->input.wnd);
     endwin();
 }
 
-// int render_panel(struct panel *p, int is_focus)
-// {
-//     werase(p->panel);
 
-//     int begin = p->top;
-//     int end = ((p->sz < begin + PANEL_ROWS) ? p->sz : begin + PANEL_ROWS);
-//     int selected = p->selected;
-
-//     for (int i = begin; i < end; ++i)
-//     {
-//         struct dirent *item = p->namelist[i];
-//         char *pattern = ((item->d_type == DT_DIR ||
-//                           item->d_type == DT_LNK)
-//                              ? "/%s"
-//                              : "%s");
-//         int cp = ((is_focus && i == selected) ? 2 : 1);
-
-//         wattron(p->panel, COLOR_PAIR(cp));
-//         mvwprintw(p->panel, i - begin, 0, pattern, item->d_name);
-//         wattroff(p->panel, COLOR_PAIR(cp));
-//     }
-//     wrefresh(p->panel);
-//     return 0;
-// }
