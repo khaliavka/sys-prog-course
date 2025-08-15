@@ -48,7 +48,7 @@ int init_gui(void)
     return 0;
 }
 
-int draw_gui(struct windows *windows)
+int draw_gui(struct windows_t *windows)
 {
     draw_wnd(&windows->messages.container, &windows->messages.wnd, 0, 0, MSGWND_ROWS, MSGWND_COLS, 1);
     draw_wnd(&windows->users.container, &windows->users.wnd, 0, MSGWND_COLS + 2, USRWND_ROWS, USRWND_COLS, 1);
@@ -61,7 +61,7 @@ int get_box_input(int y, int x, char *buf, int sz, char *prompt)
 {
     WINDOW *container;
     WINDOW *wnd;
-    draw_wnd(&container, &wnd, y, x, NICKNAME_ROWS, NICKNAME_COLS + 20, 2);
+    draw_wnd(&container, &wnd, y, x, USERNAME_ROWS, USERNAME_COLS + 20, 2);
     print_message(wnd, "", prompt);
     read_input(wnd, buf, sz, prompt);
     delwin(wnd);
@@ -69,7 +69,7 @@ int get_box_input(int y, int x, char *buf, int sz, char *prompt)
     return 0;
 }
 
-int refresh_windows(struct windows *win)
+int refresh_windows(struct windows_t *win)
 {
     werase(win->messages.container);
     werase(win->messages.wnd);
@@ -132,7 +132,7 @@ int read_input(WINDOW *wnd, char *msg, int sz, char *prompt)
     return 0;
 }
 
-void cleanup_gui(struct windows *windows)
+void cleanup_gui(struct windows_t *windows)
 {
     delwin(windows->messages.container);
     delwin(windows->messages.wnd);
@@ -142,5 +142,3 @@ void cleanup_gui(struct windows *windows)
     delwin(windows->input.wnd);
     endwin();
 }
-
-

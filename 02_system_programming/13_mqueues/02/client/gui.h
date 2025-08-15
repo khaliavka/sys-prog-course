@@ -3,8 +3,8 @@
 
 #include <curses.h>
 
-#define NICKNAME_ROWS 1
-#define NICKNAME_COLS 20
+#define USERNAME_ROWS 1
+#define USERNAME_COLS 20
 
 #define MSGWND_ROWS 20
 #define MSGWND_COLS 100
@@ -15,24 +15,24 @@
 #define INPUTWND_ROWS 1
 #define INPUTWND_COLS 122
 
-struct window
+struct window_t
 {
     WINDOW *container;
     WINDOW *wnd;
 };
 
-struct windows
+struct windows_t
 {
-    struct window messages;
-    struct window users;
-    struct window input;
+    struct window_t messages;
+    struct window_t users;
+    struct window_t input;
 
 };
 
 int init_gui(void);
-void cleanup_gui(struct windows *windows);
-int draw_gui(struct windows *windows);
-int refresh_windows(struct windows *win);
+void cleanup_gui(struct windows_t *windows);
+int draw_gui(struct windows_t *windows);
+int refresh_windows(struct windows_t *win);
 
 int get_box_input(int y, int x, char *buf, int sz, char *prompt);
 int read_input(WINDOW *wnd, char *msg, int sz, char *prompt);
