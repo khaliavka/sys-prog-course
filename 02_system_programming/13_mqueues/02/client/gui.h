@@ -39,5 +39,6 @@ int read_input(WINDOW *wnd, char *msg, int sz, char *prompt);
 
 int print_message(WINDOW *wnd, char *msg, char *prompt);
 int print_line(WINDOW *wnd, int y, int x, char *buf);
+int print_buffer(WINDOW *wnd, char *buf);
 
 #endif

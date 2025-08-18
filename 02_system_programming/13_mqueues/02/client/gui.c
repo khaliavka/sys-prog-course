@@ -8,11 +8,15 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "gui.h"
 #include "client.h"
+#include "connect.h"
 
-static void sig_winch(int signo)
+pthread_mutex_t ncurses_mtx = PTHREAD_MUTEX_INITIALIZER;
+
+void sig_winch(int signo)
 {
     (void)signo;
     struct winsize size;
@@ -105,6 +109,27 @@ int print_line(WINDOW *wnd, int y, int x, char *buf)
     return 0;
 }
 
+int print_buffer(WINDOW *wnd, char *buf)
+{
+    werase(wnd);
+    mvwprintw(wnd, 0, 0, "%s", buf);
+    wrefresh(wnd);
+    return 0;
+}
+
+int print_msgs_buf(WINDOW *wnd, struct msgs_buf_t *messages)
+{
+    int end = get_insert_idx(messages);
+    int begin = (end < MSGS_COUNT) ? 0 : end - MSGS_COUNT;
+    werase(wnd);
+    for (int i = begin; i < end; ++i)
+    {
+        int idx = i % MSGS_COUNT;
+        print_line(wnd, i - begin, 0, (char *)&get_buf(messages)[idx]);
+    }
+    return 0;
+}
+
 int read_input(WINDOW *wnd, char *msg, int sz, char *prompt)
 {
     int i = 0;
@@ -127,8 +152,13 @@ int read_input(WINDOW *wnd, char *msg, int sz, char *prompt)
             }
             break;
         }
+        pthread_mutex_lock(&ncurses_mtx);
         print_message(wnd, msg, prompt);
+        pthread_mutex_unlock(&ncurses_mtx);
     }
+    werase(wnd);
+    print_message(wnd, "", "Message");
+    wrefresh(wnd);
     return 0;
 }
 

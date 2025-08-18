@@ -43,15 +43,30 @@ int main(void)
 
     char *username = strtok(hello_buf, "|");
     char *snd_mqname = strtok(NULL, "|");
+    char *rcv_mqname = strtok(NULL, "|");
+    char *snd_usr_mqname = strtok(NULL, "|");
+
     mqd_t send_mq = mq_open(snd_mqname, O_RDWR, 0600, &attr);
     if (send_mq == -1)
     {
         perror("mq_open");
         exit(EXIT_FAILURE);
     }
-    const char *test_string = "Hey, solder! Who is in command here? -Motherfucker";
+    mqd_t send_usr_mq = mq_open(snd_usr_mqname, O_RDWR, 0600, &attr);
+    if (send_usr_mq == -1)
+    {
+        perror("mq_open");
+        exit(EXIT_FAILURE);
+    }
+    mqd_t rcv_mq = mq_open(rcv_mqname, O_RDWR, 0600, &attr);
+    if (rcv_mq == -1)
+    {
+        perror("mq_open");
+        exit(EXIT_FAILURE);
+    }
+    const char *test_string = "Hey, solder! Do you know Who is in command here? ---Motherfucker";
     char bbuff[1024];
-    for (int i = 0; i < 60; ++i)
+    for (int i = 0; i < 120; ++i)
     {
 
         snprintf(bbuff, sizeof(bbuff), "%s---%d", test_string, i);
@@ -60,8 +75,46 @@ int main(void)
             perror("mq_send");
             exit(EXIT_FAILURE);
         }
-        sleep(1);
+        usleep(250000);
     }
+
+    const char *test_usernames = "Arenius\nMatrenusPrakor\nGhartobl\n";
+    if (mq_send(send_usr_mq, test_usernames, strlen(test_usernames) + 1, MSG_PRIO) == -1)
+    {
+        perror("mq_send");
+        exit(EXIT_FAILURE);
+    }
+    sleep(2);
+    for (int i = 777; i < 800; ++i)
+    {
+
+        snprintf(bbuff, sizeof(bbuff), "%s---%d", test_string, i);
+        if (mq_send(send_mq, bbuff, sizeof(bbuff), MSG_PRIO) == -1)
+        {
+            perror("mq_send");
+            exit(EXIT_FAILURE);
+        }
+        usleep(500000);
+    }
+    sleep(2);
+    const char *test_usernames2 = "Arenius\nMatrenus\nGhartobl\nBenanzl\nGerbahen\nTrucatr\nTermuga\nVocalaver\nDrumateur\nJobkiner";
+    if (mq_send(send_usr_mq, test_usernames2, strlen(test_usernames2) + 1, MSG_PRIO) == -1)
+    {
+        perror("mq_send");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < 15; ++i)
+    {
+        char buf[1024];
+        if (mq_receive(rcv_mq, buf, sizeof(buf), MSG_PRIO) == -1)
+        {
+            perror("mq_receive");
+            exit(EXIT_FAILURE);
+        }
+        printf("Message received: %s\n", buf);
+    }
+    // sleep(2);
     // for (int i = 0; i < 70; ++i)
     // {
     //     char line[100];
