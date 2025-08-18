@@ -7,7 +7,6 @@
 #include <unistd.h>
 
 #define HELLOMQ "/hello_mq"
-#define HIMQ "/hi_mq"
 #define MSG_PRIO 0
 #define BUF_SZ 1024
 
@@ -24,12 +23,6 @@ int main(void)
         perror("mq_open");
         exit(EXIT_FAILURE);
     }
-    mqd_t hi_mq = mq_open(HIMQ, O_CREAT | O_RDWR, 0600, &attr);
-    if (hi_mq == -1)
-    {
-        perror("mq_open");
-        exit(EXIT_FAILURE);
-    }
 
     char hello_buf[BUF_SZ];
     ssize_t bytes_read = mq_receive(hello_mq, hello_buf, sizeof(hello_buf), NULL);
@@ -40,11 +33,11 @@ int main(void)
         exit(EXIT_FAILURE);
     }
     printf("Received hello message: %s\n", hello_buf);
-
+    
     char *username = strtok(hello_buf, "|");
     char *snd_mqname = strtok(NULL, "|");
-    char *rcv_mqname = strtok(NULL, "|");
     char *snd_usr_mqname = strtok(NULL, "|");
+    char *rcv_mqname = strtok(NULL, "|");
 
     mqd_t send_mq = mq_open(snd_mqname, O_RDWR, 0600, &attr);
     if (send_mq == -1)
@@ -66,7 +59,7 @@ int main(void)
     }
     const char *test_string = "Hey, solder! Do you know Who is in command here? ---Motherfucker";
     char bbuff[1024];
-    for (int i = 0; i < 120; ++i)
+    for (int i = 0; i < 60; ++i)
     {
 
         snprintf(bbuff, sizeof(bbuff), "%s---%d", test_string, i);
@@ -78,14 +71,14 @@ int main(void)
         usleep(250000);
     }
 
-    const char *test_usernames = "Arenius\nMatrenusPrakor\nGhartobl\n";
+    const char *test_usernames = "Arenius\nMatrenus\nPrakor\nGhartobl\n";
     if (mq_send(send_usr_mq, test_usernames, strlen(test_usernames) + 1, MSG_PRIO) == -1)
     {
         perror("mq_send");
         exit(EXIT_FAILURE);
     }
-    sleep(2);
-    for (int i = 777; i < 800; ++i)
+    sleep(3);
+    for (int i = 777; i < 787; ++i)
     {
 
         snprintf(bbuff, sizeof(bbuff), "%s---%d", test_string, i);
@@ -96,7 +89,7 @@ int main(void)
         }
         usleep(500000);
     }
-    sleep(2);
+    sleep(3);
     const char *test_usernames2 = "Arenius\nMatrenus\nGhartobl\nBenanzl\nGerbahen\nTrucatr\nTermuga\nVocalaver\nDrumateur\nJobkiner";
     if (mq_send(send_usr_mq, test_usernames2, strlen(test_usernames2) + 1, MSG_PRIO) == -1)
     {
@@ -104,7 +97,7 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < 15; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         char buf[1024];
         if (mq_receive(rcv_mq, buf, sizeof(buf), MSG_PRIO) == -1)
@@ -141,15 +134,7 @@ int main(void)
     {
         perror("mq_close");
     }
-    if (mq_close(hi_mq) == -1)
-    {
-        perror("mq_close");
-    }
     if (mq_unlink(HELLOMQ) == -1)
-    {
-        perror("mq_unlink");
-    }
-    if (mq_unlink(HIMQ) == -1)
     {
         perror("mq_unlink");
     }

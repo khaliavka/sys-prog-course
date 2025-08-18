@@ -17,14 +17,42 @@
 
 #define HELLOMQ "/hello_mq"
 
+mqd_t open_mqueue(char *mqname, int sz, const char* pattern, char * username, unsigned long mqid, struct mq_attr *attr)
+{
+    snprintf(mqname, sz, pattern, username, mqid);
+    mqd_t mqd = mq_open(mqname, O_CREAT | O_EXCL | O_RDWR | O_NONBLOCK, 0600, attr);
+    if (mqd == -1)
+    {
+        perror("mq_open");
+        exit(EXIT_FAILURE);
+    }
+    return mqd;
+}
+
+int delete_mqueue(mqd_t mqd, char *mqname)
+{
+    if (mq_close(mqd) == -1)
+    {
+        perror("mq_close");
+        exit(EXIT_FAILURE);
+    }
+    if (mq_unlink(mqname) == -1)
+    {
+        perror("mq_unlink");
+        exit(EXIT_FAILURE);
+    }
+    return 0;
+}
+
 int main(void)
 {
     struct windows_t windows;
+    const char *patterns[3] = {"/%s_msg_in_%lu", "/%s_username_in_%lu", "/%s_msg_out_%lu", };
     char my_username[USERNM_BUFSZ];
-    char rcv_mqname[MQNAMESZ];
-    char snd_mqname[MQNAMESZ];
-    char rcv_uname_mqname[MQNAMESZ];
-    char hello_buf[HELLOSZ];
+    char mqnames[3][MQNAMESZ];
+    mqd_t mqds[3];
+
+    char hello_buf[HELLOSZ]; 
     unsigned long mqid;
 
     init_gui();
@@ -41,27 +69,10 @@ int main(void)
         .mq_curmsgs = 0};
 
     getrandom(&mqid, sizeof(mqid), 0);
-
-    snprintf(rcv_mqname, sizeof(rcv_mqname), "/%s_msg_in_%lu", my_username, mqid);
-    mqd_t rcv_msg_mq = mq_open(rcv_mqname, O_CREAT | O_EXCL | O_RDWR | O_NONBLOCK, 0600, &attr);
-    if (rcv_msg_mq == -1)
+    
+    for (int i = 0; i < 3; ++i)
     {
-        perror("mq_open");
-        exit(EXIT_FAILURE);
-    }
-    snprintf(snd_mqname, sizeof(snd_mqname), "/%s_msg_out_%lu", my_username, mqid);
-    mqd_t snd_msg_mq = mq_open(snd_mqname, O_CREAT | O_EXCL | O_RDWR | O_NONBLOCK, 0600, &attr);
-    if (snd_msg_mq == -1)
-    {
-        perror("mq_open");
-        exit(EXIT_FAILURE);
-    }
-    snprintf(rcv_uname_mqname, sizeof(rcv_uname_mqname), "/%s_username_in_%lu", my_username, mqid);
-    mqd_t rcv_uname_mq = mq_open(rcv_uname_mqname, O_CREAT | O_EXCL | O_RDWR | O_NONBLOCK, 0600, &attr);
-    if (rcv_uname_mq == -1)
-    {
-        perror("mq_open");
-        exit(EXIT_FAILURE);
+        mqds[i] = open_mqueue((char *)&mqnames[i], sizeof(mqnames[0]), patterns[i], my_username, mqid, &attr);
     }
     mqd_t hello_mq = mq_open(HELLOMQ, O_WRONLY, 0600, &attr);
     if (hello_mq == -1)
@@ -69,25 +80,21 @@ int main(void)
         perror("mq_open");
         exit(EXIT_FAILURE);
     }
-
-    snprintf(hello_buf, sizeof(hello_buf), "%s|%s|%s|%s", my_username, rcv_mqname, snd_mqname, rcv_uname_mqname);
+    snprintf(hello_buf, sizeof(hello_buf), "%s|%s|%s|%s", my_username, mqnames[0], mqnames[1], mqnames[2]);
     if (mq_send(hello_mq, hello_buf, sizeof(hello_buf), 0) == -1)
     {
         perror("mq_send");
         exit(EXIT_FAILURE);
     }
-
     pthread_t msgs_thread;
     pthread_t usrnms_thread;
     pthread_t inputmsg_thread;
 
-    struct args_t msgs_args = {.wnd = windows.messages.wnd, .mqd = rcv_msg_mq};
+    struct args_t msgs_args = {.wnd = windows.messages.wnd, .mqd = mqds[0]};
     pthread_create(&msgs_thread, NULL, do_msgs_thread, &msgs_args);
-
-    struct args_t usrnms_args = {.wnd = windows.users.wnd, .mqd = rcv_uname_mq};
+    struct args_t usrnms_args = {.wnd = windows.users.wnd, .mqd = mqds[1]};
     pthread_create(&usrnms_thread, NULL, do_usernames_thread, &usrnms_args);
-
-    struct args_t inputmsg_args = {.wnd = windows.input.wnd, .mqd = snd_msg_mq};
+    struct args_t inputmsg_args = {.wnd = windows.input.wnd, .mqd = mqds[2]};
     pthread_create(&inputmsg_thread, NULL, do_input_msg_thread, &inputmsg_args);
 
     pthread_join(msgs_thread, NULL);
@@ -112,34 +119,13 @@ int main(void)
         perror("mq_send");
         exit(EXIT_FAILURE);
     }
-
-    if (mq_close(rcv_msg_mq) == -1)
-    {
-        perror("mq_close");
-    }
-    if (mq_close(snd_msg_mq) == -1)
-    {
-        perror("mq_close");
-    }
-    if (mq_close(rcv_uname_mq) == -1)
-    {
-        perror("mq_close");
-    }
     if (mq_close(hello_mq) == -1)
     {
         perror("mq_close");
     }
-    if (mq_unlink(rcv_mqname) == -1)
+    for (int i = 0; i < 3; ++i)
     {
-        perror("mq_unlink");
-    }
-    if (mq_unlink(snd_mqname) == -1)
-    {
-        perror("mq_unlink");
-    }
-    if (mq_unlink(rcv_uname_mqname) == -1)
-    {
-        perror("mq_unlink");
+        delete_mqueue(mqds[i], (char *)&mqnames[i]);
     }
     cleanup_gui(&windows);
     return EXIT_SUCCESS;
