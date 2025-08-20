@@ -77,18 +77,6 @@ int send_input(mqd_t mqd, char *input_msg, int sz)
     return -1;
 }
 
-
-
-// int print_usernames_buf(WINDOW *wnd, char (*name)[USERNM_BUFSZ], int rows)
-// {
-//     werase(wnd);
-//     for (int i = 0; i < rows; ++i)
-//     {
-//         print_line(wnd, i, 0, (char *)&name[i]);
-//     }
-//     return 0;
-// }
-
 void *do_msgs_thread(void *args)
 {
     struct msgs_buf_t messages = {.insert_idx = 0};
@@ -141,7 +129,7 @@ void *do_input_msg_thread(void *args)
             atomic_store(&cancel_flag, 1);
         }
         if (send_input(mqd, input_msg, sizeof(input_msg)) == -1)
-            sleep(4 * USLEEPTM);
+            usleep(USLEEPTM);
     }
     return NULL;
 }

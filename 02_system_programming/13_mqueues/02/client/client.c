@@ -101,24 +101,6 @@ int main(void)
     pthread_join(usrnms_thread, NULL);
     pthread_join(inputmsg_thread, NULL);
 
-    struct mq_attr hello_attr;
-    if (mq_getattr(hello_mq, &hello_attr) == -1)
-    {
-        perror("mq_getattr");
-        exit(EXIT_FAILURE);
-    }
-    hello_attr.mq_flags |= O_NONBLOCK;
-    if (mq_setattr(hello_mq, &hello_attr, NULL) == -1)
-    {
-        perror("mq_setattr");
-        exit(EXIT_FAILURE);
-    }
-    const char *exit_msg = "exit_msg";
-    if (mq_send(hello_mq, exit_msg, strlen(exit_msg) + 1, 0) == -1)
-    {
-        perror("mq_send");
-        exit(EXIT_FAILURE);
-    }
     if (mq_close(hello_mq) == -1)
     {
         perror("mq_close");
