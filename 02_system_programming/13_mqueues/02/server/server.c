@@ -13,7 +13,7 @@
 #define MSG_PRIO 0
 #define BUF_SZ 1024
 #define USERS_MAX_COUNT 20
-#define USLEEPTM 250000
+#define USLEEPTM 100000
 
 struct user_t
 {
@@ -98,13 +98,14 @@ int add_user(mqd_t hello_mqd)
     return 0;
 }
 
-int delete_users(struct users_t *usrs)
+int delete_users(void)
 {
-    int old_count = usrs->count;
+    pthread_mutex_lock(&gl_users.mtx);
+    int old_count = gl_users.count;
     int i = 0;
-    while (i < usrs->count)
+    while (i < gl_users.count)
     {
-        struct user_t *u = &usrs->users[i];
+        struct user_t *u = &gl_users.users[i];
         if (u->is_del_marked == 0)
         {
             ++i;
@@ -125,20 +126,24 @@ int delete_users(struct users_t *usrs)
             perror("mq_close");
             exit(EXIT_FAILURE);
         }
-        if (i < usrs->count - 1)
+        if (i < gl_users.count - 1)
         {
             struct user_t *dest = u;
-            struct user_t *src = &usrs->users[usrs->count - 1];
+            struct user_t *src = &gl_users.users[gl_users.count - 1];
             strncpy(dest->username, src->username, sizeof(dest->username));
             dest->outmsg_mqd = src->outmsg_mqd;
             dest->outusr_mqd = src->outusr_mqd;
             dest->inmsg_mqd = src->inmsg_mqd;
             dest->is_del_marked = src->is_del_marked;
         }
-        --(usrs->count);
+        --gl_users.count;
     }
-    if (usrs->count != old_count)
+    if (gl_users.count != old_count)
+    {
+        pthread_mutex_unlock(&gl_users.mtx);
         return 0;
+    }
+    pthread_mutex_unlock(&gl_users.mtx);
     return -1;
 }
 
@@ -164,9 +169,9 @@ void *do_users_thread(void *args)
     while (atomic_load(&cancel_flag) == 0)
     {
         
-        int del_usr = delete_users(&gl_users);
+        int del_usr = delete_users();
         int add_usr = add_user(hello_mqd);
-        if ( del_usr == -1 &&  add_usr == -1)
+        if ( del_usr == -1 && add_usr == -1)
         {
             usleep(USLEEPTM);
             continue;
