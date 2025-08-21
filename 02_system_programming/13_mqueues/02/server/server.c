@@ -100,6 +100,10 @@ int add_user(mqd_t hello_mqd)
 
 int delete_users(void)
 {
+    int ret;
+    mqd_t fds_del[3 * USERS_MAX_COUNT];
+    int fds_del_count = 0;
+
     pthread_mutex_lock(&gl_users.mtx);
     int old_count = gl_users.count;
     int i = 0;
@@ -111,21 +115,9 @@ int delete_users(void)
             ++i;
             continue;
         }
-        if (mq_close(u->inmsg_mqd) == -1)
-        {
-            perror("mq_close");
-            exit(EXIT_FAILURE);
-        }
-        if (mq_close(u->outusr_mqd) == -1)
-        {
-            perror("mq_close");
-            exit(EXIT_FAILURE);
-        }
-        if (mq_close(u->outmsg_mqd) == -1)
-        {
-            perror("mq_close");
-            exit(EXIT_FAILURE);
-        }
+        fds_del[fds_del_count++] = u->inmsg_mqd;
+        fds_del[fds_del_count++] = u->outusr_mqd;
+        fds_del[fds_del_count++] = u->outmsg_mqd;
         if (i < gl_users.count - 1)
         {
             struct user_t *dest = u;
@@ -138,13 +130,18 @@ int delete_users(void)
         }
         --gl_users.count;
     }
-    if (gl_users.count != old_count)
-    {
-        pthread_mutex_unlock(&gl_users.mtx);
-        return 0;
-    }
+    ret = (gl_users.count != old_count ? 0 : -1);
     pthread_mutex_unlock(&gl_users.mtx);
-    return -1;
+
+    for (int i = 0; i < fds_del_count; ++i)
+    {
+        if (mq_close(fds_del[i]) == -1)
+        {
+            perror("mq_close");
+            exit(EXIT_FAILURE);
+        }
+    }
+    return ret;
 }
 
 int mark_user_deletion(struct users_t *users, int index)
