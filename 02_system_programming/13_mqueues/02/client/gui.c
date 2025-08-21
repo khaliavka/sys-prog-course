@@ -14,6 +14,8 @@
 #include "client.h"
 #include "connect.h"
 
+#define PROMPT "Message (or exit)"
+
 pthread_mutex_t ncurses_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 void sig_winch(int signo)
@@ -57,7 +59,7 @@ int draw_gui(struct windows_t *windows)
     draw_wnd(&windows->messages.container, &windows->messages.wnd, 0, 0, MSGWND_ROWS, MSGWND_COLS, 1);
     draw_wnd(&windows->users.container, &windows->users.wnd, 0, MSGWND_COLS + 2, USRWND_ROWS, USRWND_COLS, 1);
     draw_wnd(&windows->input.container, &windows->input.wnd, MSGWND_ROWS + 2, 0, INPUTWND_ROWS, INPUTWND_COLS, 1);
-    print_message(windows->input.wnd, "", "Message");
+    print_message(windows->input.wnd, "", PROMPT);
     return 0;
 }
 
@@ -84,7 +86,7 @@ int refresh_windows(struct windows_t *win)
     box(win->messages.container, ACS_VLINE, ACS_HLINE);
     box(win->users.container, ACS_VLINE, ACS_HLINE);
     box(win->input.container, ACS_VLINE, ACS_HLINE);
-    print_message(win->input.wnd, "", "Message");
+    print_message(win->input.wnd, "", PROMPT);
     wrefresh(win->messages.container);
     wrefresh(win->messages.wnd);
     wrefresh(win->users.container);
@@ -157,7 +159,7 @@ int read_input(WINDOW *wnd, char *msg, int sz, char *prompt)
         pthread_mutex_unlock(&ncurses_mtx);
     }
     werase(wnd);
-    print_message(wnd, "", "Message");
+    print_message(wnd, "", PROMPT);
     wrefresh(wnd);
     return 0;
 }

@@ -13,6 +13,7 @@
 #include "client.h"
 
 #define USLEEPTM 250000
+#define SHORT_PROMPT "Message"
 
 extern pthread_mutex_t ncurses_mtx;
 _Atomic int cancel_flag = 0;
@@ -123,7 +124,7 @@ void *do_input_msg_thread(void *args)
     mqd_t mqd = ((struct args_t *)args)->mqd;
     while (atomic_load(&cancel_flag) == 0)
     {
-        read_input(wnd, input_msg, sizeof(input_msg), "Message");
+        read_input(wnd, input_msg, sizeof(input_msg), SHORT_PROMPT);
         if (strncmp(input_msg, "exit", 5) == 0)
         {
             atomic_store(&cancel_flag, 1);
