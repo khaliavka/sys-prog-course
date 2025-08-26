@@ -6,12 +6,9 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <stdatomic.h>
 
 #include "connect.h"
 #include "exitmacro.h"
-#include "client.h"
 #include "shmbuf_t.h"
 
 struct shmbuf_t *create_shmqueue(const char *name)

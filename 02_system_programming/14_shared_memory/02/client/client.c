@@ -132,8 +132,7 @@ int main(void)
     pthread_join(usrnms_thread, NULL);
     pthread_join(inputmsg_thread, NULL);
 
-    if (munmap(hello_shmp, sizeof(*hello_shmp)) == -1)
-        err_exit("munmap");
+    close_shmqueue(hello_shmp);
     for (int i = 0; i < 3; ++i)
     {
         delete_shmqueue(shmbufs[i], (char *)&names[i]);

@@ -2,7 +2,6 @@
 #define CONNECT_H
 
 
-#include "gui.h"
 #include "shmbuf_t.h"
 
 #define MSG_BUFSZ 1024

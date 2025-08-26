@@ -19,4 +19,4 @@ int shmbuf_init(struct shmbuf_t *shmp);
 int shmbuf_send(struct shmbuf_t *shmp, const char* msg, int msgsz);
 int shmbuf_receive(struct shmbuf_t *shmp, char *msg, int msgsz);
 
-#endif // include guard
+#endif

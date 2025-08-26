@@ -58,3 +58,4 @@ int shmbuf_receive(struct shmbuf_t *shmp, char *msg, int msgsz)
     sem_post(&shmp->sem);
     return 0;
 }
+
