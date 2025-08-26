@@ -31,6 +31,8 @@ int main(void)
         err_exit("sem_post-sem_srv");
     printf("Client sent: %s\n", msg);
 
+    if (munmap(shmp, sizeof(*shmp)) == -1)
+        err_exit("munmap");
     if (close(shmfd) == -1)
         err_exit("close");
     return EXIT_SUCCESS;

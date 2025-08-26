@@ -88,5 +88,8 @@ int main(void)
     strncpy(shmem, msg, BUF_SIZE);
     sem_post(semid, SEMNUMCLIENT);
     printf("Client sent: %s\n", msg);
+
+    if (shmdt(shmem) == -1)
+        err_exit("shmdt");
     return EXIT_SUCCESS;
 }

@@ -12,7 +12,7 @@
 #include "connect.h"
 #include "client.h"
 
-#define USLEEPTM 250000
+#define USLEEPTM 100000
 #define SHORT_PROMPT "Message"
 
 extern pthread_mutex_t ncurses_mtx;

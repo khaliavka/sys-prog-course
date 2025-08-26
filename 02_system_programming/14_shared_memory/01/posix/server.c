@@ -37,6 +37,8 @@ int main(void)
     strncpy(buf, shmp->buf, sizeof(shmp->buf));
     printf("Server received: %s\n", buf);
 
+    if (munmap(shmp, sizeof(*shmp)) == -1)
+        err_exit("munmap");
     if (close(shmfd) == -1)
         err_exit("close");
     if (shm_unlink(SHMEM_OBJ) == -1)
