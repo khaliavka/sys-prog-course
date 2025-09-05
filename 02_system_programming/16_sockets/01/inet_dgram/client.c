@@ -21,8 +21,8 @@ int main(void)
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
     srvaddr.sin_port = htons(SRVPORT);
-    srvaddr.sin_addr.s_addr = inet_addr(SRVADDR);
-
+    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+        err_exit("inet_pton");
     const char msg[] = "hello!";
     if (sendto(sfd, msg, sizeof(msg), 0, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) != sizeof(msg))
         err_exit("sendto");

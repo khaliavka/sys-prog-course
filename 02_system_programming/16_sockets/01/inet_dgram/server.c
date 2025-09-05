@@ -20,8 +20,9 @@ int main(void)
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_addr.s_addr = inet_addr(SRVADDR);
     srvaddr.sin_port = htons(SRVPORT);
+    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+        err_exit("inet_pton");
     if (bind(sfd, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) == -1)
         err_exit("bind");
 

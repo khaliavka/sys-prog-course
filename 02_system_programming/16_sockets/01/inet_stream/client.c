@@ -21,8 +21,8 @@ int main(void)
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
     srvaddr.sin_port = htons(SRVPORT);
-    srvaddr.sin_addr.s_addr = inet_addr(SRVADDR);
-
+    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+        err_exit("inet_pton");
     if (connect(sfd, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)))
         err_exit("connect");
     
