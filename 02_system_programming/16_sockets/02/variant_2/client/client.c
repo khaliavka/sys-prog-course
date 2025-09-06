@@ -10,7 +10,8 @@
 #include "../srvsettings.h"
 #include "../commands.h"
 
-
+#define NUMREQUESTS 10
+#define REQUESTTIMESEC 1
 int main(void)
 {
     int sfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -27,7 +28,7 @@ int main(void)
         err_exit("connect");
     
     const char timecmd[] = TIMECMD;
-    for (int i = 0; i < 100; ++i)
+    for (int i = 0; i < NUMREQUESTS; ++i)
     {
         if (send(sfd, timecmd, sizeof(timecmd), 0) != sizeof(timecmd))
             err_exit("send");
@@ -44,7 +45,7 @@ int main(void)
             return EXIT_SUCCESS;
         }
         printf("%s\n", timebuf);
-        sleep(1);
+        sleep(REQUESTTIMESEC);
     }
     const char exitcmd[] = EXITCMD;
     if (send(sfd, exitcmd, sizeof(exitcmd), 0) != sizeof(exitcmd))

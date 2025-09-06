@@ -47,6 +47,8 @@ void *do_connection_thread(void *args)
     while (shutdown_flag == 0)
     {
         pthread_mutex_lock(&tasks[index].mutex);
+        tasks[index].is_busy = 0;
+        tasks[index].connfd = -1;
         while (tasks[index].is_busy == 0 && shutdown_flag == 0)
             pthread_cond_wait(&tasks[index].condvar, &tasks[index].mutex);
         connfd = tasks[index].connfd;
@@ -69,12 +71,6 @@ void *do_connection_thread(void *args)
             {
                 if (close(connfd) == -1)
                     err_exit("close");
-
-                pthread_mutex_lock(&tasks[index].mutex);
-                tasks[index].is_busy = 0;
-                tasks[index].connfd = -1;
-                pthread_mutex_unlock(&tasks[index].mutex);
-
                 break;
             }
             if (strncmp(command, TIMECMD, sizeof(command)) == 0)
