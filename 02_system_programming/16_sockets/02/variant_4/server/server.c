@@ -40,7 +40,6 @@ typedef struct
 } fdbuf_t;
 
 atomic_int cancel_flag = 0;
-fdbuf_t opensocks;
 
 int add_fd(fdbuf_t *fdbuf, int fd, fdtype_t fdtype)
 {
@@ -52,7 +51,6 @@ int add_fd(fdbuf_t *fdbuf, int fd, fdtype_t fdtype)
 
 int remove_fd(fdbuf_t *fdbuf, int fd, int (*do_cleanup)(int))
 {
-    int index = 0;
     for (int i = 0; i < fdbuf->count; ++i)
     {
         if (fdbuf->fds[i].fd == fd)
@@ -75,7 +73,7 @@ int my_gettime(char *tmbuf, size_t tmbufsz)
     return 0;
 }
 
-int send_exittcp(int fd)
+int do_tcp_cleanup(int fd)
 {
     char exitcmd[] = EXITCMD;
     if (send(fd, exitcmd, sizeof(exitcmd), 0) != sizeof(exitcmd))
@@ -85,66 +83,9 @@ int send_exittcp(int fd)
     return 0;
 }
 
-void *do_connection_thread(void *args)
-{
-    /*
-    struct task_t task = {.connfd = -1};
-    while (tasks.cancel_flag == 0)
-    {
-        if (taskqueue_pop(&tasks, &task) == -1)
-            break;
-        while (tasks.cancel_flag == 0)
-        {
-            int nr = recv(task.connfd, command, sizeof(command) - 1, 0);
-            if (nr == -1)
-            {
-                if (errno == EAGAIN)
-                continue;
-
-                err_exit("recv");
-                }
-                command[nr] = '\0';
-                if (strncmp(command, EXITCMD, sizeof(command)) == 0)
-                {
-                    if (close(task.connfd) == -1)
-                    err_exit("close");
-                    task.connfd = -1;
-                    break;
-                    }
-                    if (strncmp(command, TIMECMD, sizeof(command)) == 0)
-                    {
-                        char timebuf[TIMEBUFSIZE];
-                        my_gettime(timebuf, sizeof(timebuf));
-                        if (send(task.connfd, timebuf, sizeof(timebuf) - 1, 0) != sizeof(timebuf) - 1)
-                        err_exit("send");
-                        }
-                        }
-                        }
-                        if (task.connfd == -1)
-                        return NULL;
-                        send_exitcmd(task);
-                        */
-    return NULL;
-}
-
-void *do_exit_thread(void *args)
-{
-    /*
-char cmd[CMDBUFSIZE];
-while (tasks.cancel_flag == 0)
-{
-printf("Toy timeserver (print exit): ");
-fgets(cmd, sizeof(cmd), stdin);
-if (strncmp(cmd, "exit\n", 6) == 0)
-taskqueue_cancel(&tasks, send_exitcmd);
-}
-*/
-    return NULL;
-}
-
 int get_tcp_listen_sock(void)
 {
-    int listenfd = socket(AF_INET, SOCK_STREAM, 0);
+    int listenfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (listenfd == -1)
         err_exit("socket");
     int option = 1;
@@ -165,7 +106,7 @@ int get_tcp_listen_sock(void)
 
 int get_udp_sock(void)
 {
-    int sfd = socket(AF_INET, SOCK_DGRAM, 0);
+    int sfd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
     if (sfd == -1)
         err_exit("socket");
 
@@ -183,7 +124,7 @@ int get_udp_sock(void)
 int handle_udp_event(int fd, struct sockaddr_in *claddr, socklen_t *claddrlen)
 {
     char command[CMDBUFSIZE];
-    int nr = recvfrom(fd, (char *)command, sizeof(command) - 1, 0, (struct sockaddr *)&claddr, &claddrlen);
+    int nr = recvfrom(fd, (char *)command, sizeof(command) - 1, 0, (struct sockaddr *)claddr, claddrlen);
     if (nr == -1)
         err_exit("recvfrom");
     command[nr] = '\0';
@@ -192,25 +133,74 @@ int handle_udp_event(int fd, struct sockaddr_in *claddr, socklen_t *claddrlen)
         char timebuf[TIMEBUFSIZE];
         my_gettime(timebuf, sizeof(timebuf));
         if (sendto(fd, (const char *)timebuf, sizeof(timebuf) - 1, 0,
-                   (const struct sockaddr *)&claddr, sizeof(claddr)) != sizeof(timebuf) - 1)
+                   (const struct sockaddr *)claddr, sizeof(*claddr)) != sizeof(timebuf) - 1)
             err_exit("sendto");
     }
+    return 0;
 }
 
-int handle_listen_event()
+int handle_listen_event(fdbuf_t *fdbuf, int lifd, int epollfd)
 {
+    int cfd = accept(lifd, NULL, NULL);
+    if (cfd == -1)
+        err_exit("accept");
+    add_fd(fdbuf, cfd, ACTIVE_TCP);
 
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = cfd;
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, cfd, &ev) == -1)
+        err_exit("epoll_ctl");
+    return 0;
+}
+
+int handle_tcp_event(fdbuf_t *fdbuf, int fd, int epollfd)
+{
+    char command[CMDBUFSIZE];
+    int nr = recv(fd, command, sizeof(command) - 1, 0);
+    if (nr == -1)
+        err_exit("recv");
+
+    command[nr] = '\0';
+    if (strncmp(command, TIMECMD, sizeof(command)) == 0)
+    {
+        char timebuf[TIMEBUFSIZE];
+        my_gettime(timebuf, sizeof(timebuf));
+        if (send(fd, timebuf, sizeof(timebuf) - 1, 0) != sizeof(timebuf) - 1)
+            err_exit("send");
+    }
+    else if (strncmp(command, EXITCMD, sizeof(command)) == 0)
+    {
+        if (epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL) == -1)
+            err_exit("epoll_ctl");
+        remove_fd(fdbuf, fd, do_tcp_cleanup);
+    }
+    return 0;
+}
+
+void *do_exit_thread(void *args)
+{
+    char cmd[CMDBUFSIZE];
+    while (cancel_flag == 0)
+    {
+        printf("Toy timeserver (print exit): ");
+        fgets(cmd, sizeof(cmd), stdin);
+        if (strncmp(cmd, "exit\n", 6) == 0)
+            cancel_flag = 1;
+    }
+    return NULL;
 }
 
 int main(void)
 {
-    // pthread_t exit_thr;
-    // pthread_create(&exit_thr, NULL, do_exit_thread, NULL);
+    fdbuf_t opensocks;
+    pthread_t exit_thread;
     struct epoll_event ev, events[MAX_EVENTS];
     int listen_tcpfd, udpfd, epollfd, nevents;
     struct sockaddr_in claddr;
     socklen_t claddrlen;
 
+    pthread_create(&exit_thread, NULL, do_exit_thread, NULL);
     memset(&claddr, 0, sizeof(claddr));
     claddrlen = sizeof(claddr);
     udpfd = get_udp_sock();
@@ -220,9 +210,17 @@ int main(void)
 
     if ((epollfd = epoll_create1(0)) == -1)
         err_exit("create_epoll");
+
+    memset(&ev, 0, sizeof(ev));
     ev.events = EPOLLIN;
     ev.data.fd = udpfd;
     if (epoll_ctl(epollfd, EPOLL_CTL_ADD, udpfd, &ev) == -1)
+        err_exit("epoll_ctl");
+
+    memset(&ev, 0, sizeof(ev));
+    ev.events = EPOLLIN;
+    ev.data.fd = listen_tcpfd;
+    if (epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_tcpfd, &ev) == -1)
         err_exit("epoll_ctl");
 
     while (cancel_flag == 0)
@@ -230,7 +228,7 @@ int main(void)
         nevents = epoll_wait(epollfd, events, MAX_EVENTS, WAIT_TIMEOUT);
         if (nevents == -1)
         {
-            if (errno == EAGAIN)
+            if (errno == EAGAIN || errno == EINTR)
                 continue;
             err_exit("epoll_wait");
         }
@@ -242,43 +240,29 @@ int main(void)
             {
                 if (events[n].data.fd != opensocks.fds[m].fd)
                     continue;
-                fddata_t fddat = opensocks.fds[m];
-                switch (fddat.type)
+
+                fddata_t fddata = opensocks.fds[m];
+                switch (fddata.type)
                 {
                 case UDP:
-                    handle_udp_event(fddat.fd, &claddr, &claddrlen);
+                    handle_udp_event(fddata.fd, &claddr, &claddrlen);
                     break;
                 case LISTEN_TCP:
-
+                    handle_listen_event(&opensocks, fddata.fd, epollfd);
                     break;
                 case ACTIVE_TCP:
+                    handle_tcp_event(&opensocks, fddata.fd, epollfd);
+                    break;
                 default:
                     break;
                 }
             }
         }
     }
-    while (cancel_flag == 0)
-    {
-
-        // int connfd = accept(listenfd, NULL, NULL);
-        // if (connfd == -1)
-        // {
-        //     if (errno = EAGAIN)
-        //         continue;
-        //     err_exit("accept");
-        // }
-        // struct timeval tv;
-        // tv.tv_sec = RCVTIMEOUTSEC;
-        // tv.tv_usec = 0;
-        // if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv) == -1)
-        //     err_exit("setsockopt");
-        // if (close(connfd) == -1)
-        //         err_exit("close");
-    }
-    /* pthread_join(exit_thr, NULL);
-    if (close(listenfd) == -1)
+    pthread_join(exit_thread, NULL);
+    if (close(udpfd) == -1)
         err_exit("close");
-    */
+    if (close(listen_tcpfd) == -1)
+        err_exit("close");
     return EXIT_SUCCESS;
 }

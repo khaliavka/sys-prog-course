@@ -38,7 +38,7 @@ int main(void)
         if (nr == -1)
             err_exit("recv");
         timebuf[nr] = '\0';
-        if (strncmp(timebuf, EXITCMD, sizeof(timebuf)) == 0)
+        if (nr == 0 || strncmp(timebuf, EXITCMD, sizeof(timebuf)) == 0)
         {
             puts("Server exited.");
             if (close(sfd) == -1)

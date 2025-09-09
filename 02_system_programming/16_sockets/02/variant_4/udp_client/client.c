@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,12 +13,19 @@
 
 #define NUMREQUESTS 30
 #define REQUESTTIMESEC 1
+#define RCVTIMEOUTSEC 5
 
 int main(void)
 {
     int sfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sfd == -1)
         err_exit("socket");
+
+    struct timeval tv;
+    tv.tv_sec = RCVTIMEOUTSEC;
+    tv.tv_usec = 0;
+    if (setsockopt(sfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv) == -1)
+        err_exit("setsockopt");
 
     struct sockaddr_in srvaddr;
     socklen_t srvaddrlen = sizeof(srvaddr);
@@ -36,7 +44,16 @@ int main(void)
         char timebuf[TIMEBUFSIZE];
         int nr = recvfrom(sfd, (char *)timebuf, sizeof(timebuf) - 1, 0, (struct sockaddr *)&srvaddr, &srvaddrlen);
         if (nr == -1)
+        {
+            if (errno == EAGAIN)
+            {
+                puts("Server offline.");
+                if (close(sfd) == -1)
+                err_exit("close");
+                return EXIT_SUCCESS;
+            }
             err_exit("recvfrom");
+        }
         timebuf[nr] = '\0';
         if (strncmp(timebuf, EXITCMD, sizeof(timebuf)) == 0)
         {
