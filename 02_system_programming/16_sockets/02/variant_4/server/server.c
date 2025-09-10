@@ -14,55 +14,13 @@
 #include "../exitmacro.h"
 #include "../srvsettings.h"
 #include "../commands.h"
+#include "fdbuf_t.h"
 
 #define LISTENBACKLOG 5
-#define FDBUF_SIZE 1000
 #define MAX_EVENTS FDBUF_SIZE
 #define WAIT_TIMEOUT 500
 
-typedef enum
-{
-    UDP,
-    LISTEN_TCP,
-    ACTIVE_TCP
-} fdtype_t;
-
-typedef struct
-{
-    int fd;
-    fdtype_t type;
-} fddata_t;
-
-typedef struct
-{
-    fddata_t fds[FDBUF_SIZE];
-    int count;
-} fdbuf_t;
-
 atomic_int cancel_flag = 0;
-
-int add_fd(fdbuf_t *fdbuf, int fd, fdtype_t fdtype)
-{
-    if (fdbuf->count == FDBUF_SIZE)
-        return -1;
-    fdbuf->fds[fdbuf->count++] = (fddata_t){.fd = fd, .type = fdtype};
-    return 0;
-}
-
-int remove_fd(fdbuf_t *fdbuf, int fd, int (*do_cleanup)(int))
-{
-    for (int i = 0; i < fdbuf->count; ++i)
-    {
-        if (fdbuf->fds[i].fd == fd)
-        {
-            fdbuf->fds[i] = fdbuf->fds[fdbuf->count - 1];
-            --fdbuf->count;
-            do_cleanup(fd);
-            break;
-        }
-    }
-    return 0;
-}
 
 int my_gettime(char *tmbuf, size_t tmbufsz)
 {
@@ -201,10 +159,13 @@ int main(void)
     socklen_t claddrlen;
 
     pthread_create(&exit_thread, NULL, do_exit_thread, NULL);
+    
     memset(&claddr, 0, sizeof(claddr));
     claddrlen = sizeof(claddr);
+
     udpfd = get_udp_sock();
     listen_tcpfd = get_tcp_listen_sock();
+
     add_fd(&opensocks, udpfd, UDP);
     add_fd(&opensocks, listen_tcpfd, LISTEN_TCP);
 
