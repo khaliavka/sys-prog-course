@@ -154,7 +154,7 @@ int main(void)
         int connfd = accept(listenfd, NULL, NULL);
         if (connfd == -1)
         {
-            if (errno = EAGAIN)
+            if (errno == EAGAIN || errno == EINTR)
                 continue;
             err_exit("accept");
         }
