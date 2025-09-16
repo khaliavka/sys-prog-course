@@ -11,7 +11,8 @@
 #include "../srv_settings.h"
 
 #define BUF_SIZE 100
-#define CLPORT (SRVPORT + 1)
+#define CLPORT 50001
+
 int main(void)
 {
 
@@ -31,7 +32,6 @@ int main(void)
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_port = htons(SRVPORT);
     if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) != 1)
         err_exit("inet_pton");
 
@@ -45,10 +45,10 @@ int main(void)
         int nr = recvfrom(sfd, buf, sizeof(buf), 0, NULL, NULL);
         if (nr == -1)
             err_exit("recvfrom");
-        uint16_t port = ntohs(*(uint16_t *)(buf + 0x16));
-        if (port == CLPORT)
+        uint16_t dst_port = ntohs(*(uint16_t *)(buf + 0x16));
+        if (dst_port == CLPORT)
         {
-            printf("%d  %s\n", port, (buf + 0x1c));
+            printf("%s\n", (buf + 0x1c));
             break;
         }
     }
