@@ -11,11 +11,11 @@
 #include <stdatomic.h>
 
 #include "../exitmacro.h"
-#include "../srvsettings.h"
+#include "../settings.h"
 #include "../commands.h"
 
 #define BACKLOG 300
-#define RCVTIMEOUT 1
+#define RCVTIMEOUTSEC 1
 #define NUMWORKERS 16
 
 struct task_t
@@ -121,15 +121,15 @@ int main(void)
     if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option)) == -1)
         err_exit("setsockopt");
     struct timeval tv;
-    tv.tv_sec = RCVTIMEOUT;
+    tv.tv_sec = RCVTIMEOUTSEC;
     tv.tv_usec = 0;
     if (setsockopt(listenfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv) == -1)
         err_exit("setsockopt");
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_port = htons(SRVPORT);
-    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+    srvaddr.sin_port = htons(SRV_PORT);
+    if (inet_pton(AF_INET, SRV_IPADDR, &srvaddr.sin_addr) < 1)
         err_exit("inet_pton");
     if (bind(listenfd, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) == -1)
         err_exit("bind");
@@ -159,7 +159,7 @@ int main(void)
             err_exit("accept");
         }
         struct timeval tv;
-        tv.tv_sec = RCVTIMEOUT;
+        tv.tv_sec = RCVTIMEOUTSEC;
         tv.tv_usec = 0;
         if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof tv) == -1)
             err_exit("setsockopt");

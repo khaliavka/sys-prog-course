@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #include "../exitmacro.h"
-#include "../srvsettings.h"
+#include "../settings.h"
 #include "../commands.h"
 
 #define NUMREQUESTS 30
@@ -31,8 +31,8 @@ int main(void)
     socklen_t srvaddrlen = sizeof(srvaddr);
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_port = htons(SRVPORT);
-    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+    srvaddr.sin_port = htons(SRV_PORT);
+    if (inet_pton(AF_INET, SRV_IPADDR, &srvaddr.sin_addr) < 1)
         err_exit("inet_pton");
     
     const char timecmd[] = TIMECMD;

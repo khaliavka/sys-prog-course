@@ -12,13 +12,13 @@
 #include <stdatomic.h>
 
 #include "../exitmacro.h"
-#include "../srvsettings.h"
+#include "../settings.h"
 #include "../commands.h"
 #include "fdbuf_t.h"
 
 #define LISTENBACKLOG 5
 #define MAX_EVENTS FDBUF_SIZE
-#define WAIT_TIMEOUT 500
+#define WAIT_TIMEOUT_MS 500
 
 atomic_int cancel_flag = 0;
 
@@ -52,8 +52,8 @@ int get_tcp_listen_sock(void)
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_port = htons(SRVPORT);
-    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+    srvaddr.sin_port = htons(SRV_PORT);
+    if (inet_pton(AF_INET, SRV_IPADDR, &srvaddr.sin_addr) < 1)
         err_exit("inet_pton");
     if (bind(listenfd, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) == -1)
         err_exit("bind");
@@ -71,8 +71,8 @@ int get_udp_sock(void)
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_port = htons(SRVPORT);
-    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+    srvaddr.sin_port = htons(SRV_PORT);
+    if (inet_pton(AF_INET, SRV_IPADDR, &srvaddr.sin_addr) < 1)
         err_exit("inet_pton");
     if (bind(sfd, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) == -1)
         err_exit("bind");
@@ -186,7 +186,7 @@ int main(void)
 
     while (cancel_flag == 0)
     {
-        nevents = epoll_wait(epollfd, events, MAX_EVENTS, WAIT_TIMEOUT);
+        nevents = epoll_wait(epollfd, events, MAX_EVENTS, WAIT_TIMEOUT_MS);
         if (nevents == -1)
         {
             if (errno == EAGAIN || errno == EINTR)
