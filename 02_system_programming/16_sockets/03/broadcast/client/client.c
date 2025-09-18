@@ -33,7 +33,7 @@ int main(void)
     memset(&myendp, 0, sizeof(myendp));
     myendp.sin_family = AF_INET;
     myendp.sin_port = htons(CLIENT_BROADC_PORT);
-    if (inet_pton(AF_INET, BROADC_ADDR, &myendp.sin_addr) < 1)
+    if (inet_pton(AF_INET, BROADC_IPADDR, &myendp.sin_addr) < 1)
         err_exit("inet_pton");
     if (bind(fd, (const struct sockaddr *)&myendp, sizeof(myendp)) == -1)
         err_exit("bind");

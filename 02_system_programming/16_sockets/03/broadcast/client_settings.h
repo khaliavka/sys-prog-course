@@ -2,6 +2,6 @@
 #define CLIENT_SETTINGS_H
 
 #define CLIENT_BROADC_PORT 50000
-#define BROADC_ADDR "10.33.77.31"
+#define BROADC_IPADDR "10.33.77.31"
 
 #endif

@@ -59,7 +59,7 @@ int main(void)
     memset(&multicast_endp, 0, sizeof(multicast_endp));
     multicast_endp.sin_family = AF_INET;
     multicast_endp.sin_port = htons(CLIENT_PORT);
-    if (inet_pton(AF_INET, MULTIC_ADDR, &multicast_endp.sin_addr) < 1)
+    if (inet_pton(AF_INET, MULTIC_IPADDR, &multicast_endp.sin_addr) < 1)
     err_exit("inet_pton");
     
     fd = get_udp_sock();

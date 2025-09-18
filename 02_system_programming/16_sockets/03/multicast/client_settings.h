@@ -2,6 +2,6 @@
 #define CLIENT_SETTINGS_H
 
 #define CLIENT_PORT 50000
-#define MULTIC_ADDR "224.0.0.1"
+#define MULTIC_IPADDR "224.0.0.1"
 
 #endif

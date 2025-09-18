@@ -38,7 +38,7 @@ int main(void)
     if (bind(fd, (const struct sockaddr *)&myendp, sizeof(myendp)) == -1)
         err_exit("bind");
 
-    if (inet_pton(AF_INET, MULTIC_ADDR, &mreq.imr_multiaddr.s_addr) != 1)
+    if (inet_pton(AF_INET, MULTIC_IPADDR, &mreq.imr_multiaddr.s_addr) != 1)
         err_exit("inet_pton");
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
     if (setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)

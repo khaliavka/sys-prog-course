@@ -63,7 +63,7 @@ int main(void)
     memset(&broadcast_endp, 0, sizeof(broadcast_endp));
     broadcast_endp.sin_family = AF_INET;
     broadcast_endp.sin_port = htons(CLIENT_BROADC_PORT);
-    if (inet_pton(AF_INET, BROADC_ADDR, &broadcast_endp.sin_addr) < 1)
+    if (inet_pton(AF_INET, BROADC_IPADDR, &broadcast_endp.sin_addr) < 1)
         err_exit("inet_pton");
 
     while (cancel_flag == 0)
