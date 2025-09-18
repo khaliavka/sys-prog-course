@@ -4,9 +4,7 @@
 #include <unistd.h>
 
 #include "exitmacro.h"
-#include "srvsoname.h"
-
-#define BUF_SIZE 100
+#include "settings.h"
 
 int main(void)
 {
@@ -17,7 +15,7 @@ int main(void)
     struct sockaddr_un srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sun_family = AF_LOCAL;
-    strncpy(srvaddr.sun_path, SRVSONAME, sizeof(srvaddr.sun_path) - 1);
+    strncpy(srvaddr.sun_path, SRV_SONAME, sizeof(srvaddr.sun_path) - 1);
     if (bind(sfd, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) == -1)
         err_exit("bind");
 

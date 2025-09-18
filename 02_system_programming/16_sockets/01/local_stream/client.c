@@ -6,8 +6,6 @@
 #include "exitmacro.h"
 #include "settings.h"
 
-#define BUF_SIZE 100
-
 int main(void)
 {
     int sfd = socket(AF_LOCAL, SOCK_STREAM, 0);

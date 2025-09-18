@@ -6,9 +6,6 @@
 #include "exitmacro.h"
 #include "settings.h"
 
-#define BACKLOG 1
-#define BUF_SIZE 100
-
 int main(void)
 {
     int listenfd = socket(AF_LOCAL, SOCK_STREAM, 0);

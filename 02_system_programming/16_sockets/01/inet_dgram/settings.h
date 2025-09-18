@@ -3,5 +3,6 @@
 
 #define SRV_IPADDR "127.0.0.1"
 #define SRV_PORT 50000
+#define BUF_SIZE 100
 
 #endif
