@@ -8,13 +8,9 @@
 #include <unistd.h>
 
 #include "../exitmacro.h"
-#include "../srv_settings.h"
+#include "../settings.h"
 
-#define BUF_SIZE 100
-
-#define CLADDR "127.0.0.1"
-#define CLPORT 50001
-#define TIMETOLIVE 64
+#define TTL 64
 
 struct ipv4_header_t
 {
@@ -38,7 +34,7 @@ int init_ipv4_header(struct ipv4_header_t *h, uint16_t total_len,
     h->total_len = htons(total_len);
     h->id = htons(0);
     h->flags_frag_offset = htons(0);
-    h->ttl = TIMETOLIVE;
+    h->ttl = TTL;
     h->protocol = protocol;
     h->header_checksum = htons(0);
     if (inet_pton(AF_INET, src_ipaddr, &h->src_ipaddr) != 1)
@@ -74,8 +70,8 @@ int main(void)
     const char msg[] = "-----------------------------";
     size_t ippacksz = sizeof(ipv4_header) + sizeof(udp_header) + sizeof(msg);
 
-    init_ipv4_header(&ipv4_header, ippacksz, IPPROTO_UDP, CLADDR, SRVADDR);
-    init_udp_header(&udp_header, CLPORT, SRVPORT, sizeof(udp_header) + sizeof(msg));
+    init_ipv4_header(&ipv4_header, ippacksz, IPPROTO_UDP, CL_IPADDR, SRV_IPADDR);
+    init_udp_header(&udp_header, CL_PORT, SRV_PORT, sizeof(udp_header) + sizeof(msg));
 
     memcpy(packetbuf, &ipv4_header, sizeof(ipv4_header));
     memcpy(packetbuf + sizeof(ipv4_header), &udp_header, sizeof(udp_header));
@@ -90,6 +86,9 @@ int main(void)
 
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
+    srvaddr.sin_family = AF_INET;
+    if (inet_pton(AF_INET, SRV_IPADDR, &srvaddr.sin_addr) != 1)
+        err_exit("inet_pton");
 
     if (sendto(sfd, packetbuf, ippacksz, 0,
                (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) != (ssize_t)ippacksz)
@@ -99,10 +98,10 @@ int main(void)
     
     while (1)
     {
-        int nr = recvfrom(sfd, buf, sizeof(buf), 0, NULL, NULL);
+        int nr = recvfrom(sfd, buf, sizeof(buf) - 1, 0, NULL, NULL);
         if (nr == -1)
             err_exit("recvfrom");
-
+        buf[nr] = '\0';
         struct ipv4_header_t *iphdr = (struct ipv4_header_t *)buf;
         struct udp_header_t *udphdr = (struct udp_header_t *)(iphdr + 1);
         uint32_t income_dst_ipaddr = iphdr->dst_ipaddr;

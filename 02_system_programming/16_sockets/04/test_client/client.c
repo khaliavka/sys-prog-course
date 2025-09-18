@@ -7,9 +7,7 @@
 #include <unistd.h>
 
 #include "../exitmacro.h"
-#include "../srv_settings.h"
-
-#define BUF_SIZE 100
+#include "../settings.h"
 
 int main(void)
 {
@@ -20,11 +18,11 @@ int main(void)
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_port = htons(SRVPORT);
-    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) != 1)
+    srvaddr.sin_port = htons(SRV_PORT);
+    if (inet_pton(AF_INET, SRV_IPADDR, &srvaddr.sin_addr) != 1)
         err_exit("inet_pton");
-    const char msg[] = "-------------------------------";
-    if (sendto(sfd, msg, sizeof(msg) - 1, 0, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) != sizeof(msg) - 1)
+    const char msg[] = "-----------------------------";
+    if (sendto(sfd, msg, sizeof(msg), 0, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) != sizeof(msg))
         err_exit("sendto");
     
     char buf[BUF_SIZE];
