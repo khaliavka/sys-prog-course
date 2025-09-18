@@ -12,7 +12,6 @@
 
 int main(void)
 {
-
     const char msg[] = "-----------------------------";
     size_t udpheadsz = 8;
     size_t udppacksz = sizeof(msg) + udpheadsz;
