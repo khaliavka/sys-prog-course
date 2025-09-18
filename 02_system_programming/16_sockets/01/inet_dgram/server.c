@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #include "exitmacro.h"
-#include "srvaddrport.h"
+#include "settings.h"
 
 #define BUF_SIZE 100
 
@@ -20,8 +20,8 @@ int main(void)
     struct sockaddr_in srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sin_family = AF_INET;
-    srvaddr.sin_port = htons(SRVPORT);
-    if (inet_pton(AF_INET, SRVADDR, &srvaddr.sin_addr) < 1)
+    srvaddr.sin_port = htons(SRV_PORT);
+    if (inet_pton(AF_INET, SRV_IPADDR, &srvaddr.sin_addr) < 1)
         err_exit("inet_pton");
     if (bind(sfd, (const struct sockaddr *)&srvaddr, sizeof(srvaddr)) == -1)
         err_exit("bind");

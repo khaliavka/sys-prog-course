@@ -5,10 +5,8 @@
 #include <unistd.h>
 
 #include "exitmacro.h"
-#include "srvsoname.h"
+#include "settings.h"
 
-#define BUF_SIZE 100
-#define CLSONAME "/tmp/client_hi_sock"
 int main(void)
 {
     int sfd = socket(AF_LOCAL, SOCK_DGRAM, 0);
@@ -18,14 +16,14 @@ int main(void)
     struct sockaddr_un claddr;
     memset(&claddr, 0, sizeof(claddr));
     claddr.sun_family = AF_LOCAL;
-    snprintf(claddr.sun_path, sizeof(claddr.sun_path), CLSONAME"_%ld", (long) getpid());
+    snprintf(claddr.sun_path, sizeof(claddr.sun_path), CL_SONAME"_%ld", (long) getpid());
     if (bind(sfd, (const struct sockaddr *)&claddr, sizeof(claddr)) == -1)
         err_exit("bind");
     
     struct sockaddr_un srvaddr;
     memset(&srvaddr, 0, sizeof(srvaddr));
     srvaddr.sun_family = AF_LOCAL;
-    strncpy(srvaddr.sun_path, SRVSONAME, sizeof(claddr.sun_path) - 1);
+    strncpy(srvaddr.sun_path, SRV_SONAME, sizeof(claddr.sun_path) - 1);
 
     const char msg[] = "hello!";
     if (sendto(sfd, msg, sizeof(msg), 0, (struct sockaddr *)&srvaddr, sizeof(srvaddr)) != sizeof(msg))
