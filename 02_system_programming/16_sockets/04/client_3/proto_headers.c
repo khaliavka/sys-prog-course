@@ -40,7 +40,7 @@ int init_ipv4_header(struct ipv4_header_t *h, uint16_t total_len,
         err_exit("inet pton");
     
     h->header_checksum = htons(0);
-    h->header_checksum = htons(calc_ipv4_header_checksum(h));
+    h->header_checksum = calc_ipv4_header_checksum(h);
     return 0;
 }
 
@@ -49,10 +49,10 @@ uint16_t calc_ipv4_header_checksum(struct ipv4_header_t *h)
     uint64_t sum = 0;
 
     for (int i = 0; i < 10; ++i)
-        sum += htons(((uint16_t *)h)[i]);
+        sum += ((uint16_t *)h)[i];
 
     sum += (sum >> 16);
-    return ~(uint16_t)sum;
+    return ~(uint16_t)(0xffff & sum);
 }
 
 int init_udp_header(struct udp_header_t *h, uint16_t src_port,
@@ -74,7 +74,7 @@ int test_checksum(void)
     uint8_t ip_header[20] = {0x45, 0, 0, 0x3a, 0, 0, 0, 0, 0x40, 0x11, 0, 0,
                              0xa, 0x21, 0x4d, 5, 0xa, 0x21, 0x4d, 0xc};
     uint16_t checksum = calc_ipv4_header_checksum((struct ipv4_header_t *)&ip_header);
-    *(uint16_t *)(ip_header + 10) = htons(checksum);
+    *(uint16_t *)(ip_header + 10) = checksum;
     checksum = calc_ipv4_header_checksum((struct ipv4_header_t *)&ip_header);
     return checksum == 0;
 }
