@@ -1,0 +1,26 @@
+Сборка корневой файловой системы с BusyBox.
+
+Среда сборки: Docker - Ubuntu 25.04 (Plucky Puffin)
+
+Команды для сборки:    
+    wget https://busybox.net/downloads/busybox-1.36.1.tar.bz2
+    tar -xf busybox-1.36.1.tar.bz2
+    cd busybox-1.36.1
+
+    *Добавляем небольшое исправление в систему сборки
+    *perl -pi.bak -e 's/main\(\) \{\}/int main(void) {return 0;}/g;' scripts/kconfig/lxdialog/check-lxdialog.sh
+    
+    ARCH=arm make defconfig
+    ARCH=arm make menuconfig
+    *Включить Build static binary (no shared libs)
+    *Заполнить Cross compiler prefix arm-linux-gnueabihf-
+    *Выключить Networking Utilities/tc (8.3 kb)
+    
+    make -j$(nproc)
+    make install
+    cd ./_install
+    rm linuxrc
+    find . | cpio -o -H newc | gzip > /workspace/linux-6.17/initramfs.cpio.gz
+    QEMU_AUDIO_DRV=none qemu-system-arm -m 512M -M vexpress-a9 -kernel /workspace/linux-6.17/arch/arm/boot/zImage \
+        -dtb /workspace/linux-6.17/arch/arm/boot/dts/arm/vexpress-v2p-ca9.dtb \
+        -initrd /workspace/linux-6.17/initramfs.cpio.gz -nographic -append "console=ttyAMA0 rdinit=/bin/ash"

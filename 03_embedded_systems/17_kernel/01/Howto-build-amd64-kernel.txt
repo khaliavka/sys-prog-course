@@ -1,0 +1,19 @@
+Сборка ядра для x86_64.
+
+Среда сборки: Fedora 42 (Adams)
+Среда запуска: QEMU/KVM Fedora 42 (Adams)
+
+Команды для сборки:
+    В host-системе:
+        wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.tar.xz
+        tar -xf linux-6.17.tar.xz
+        cd linux-6.17
+        cp config-6.16.8-200.fc42.x86_64 .config
+        make oldconfig
+    В гостевой ОС:
+        localmodconfig
+    В host-системе:
+    make -j$(nproc) binrpm-pkg
+    В гостевой ОС:
+    sudo dnf install kernel-6.17.0eltex_course_build_04185_g7f7072574127-1.x86_64.rpm
+    reboot

@@ -1,0 +1,57 @@
+Сборка zlib, OpenSSL, OpenSSH.
+
+Среда сборки: Docker - Ubuntu 25.04 (Plucky Puffin)
+
+Команды для сборки:    
+1. Сборка zlib:
+    wget https://zlib.net/zlib-1.3.1.tar.gz
+    tar -xf zlib-1.3.1.tar.gz
+    cd zlib-1.3.1
+    CC=arm-linux-gnueabihf-gcc ./configure --shared --prefix=/workspace/rootfs/usr/local
+    make -j$(nproc)
+    make install
+
+2. Сборка OpenSSL:
+    wget https://github.com/openssl/openssl/releases/download/openssl-3.5.4/openssl-3.5.4.tar.gz
+    tar -xf openssl-3.5.4.tar.gz
+    cd openssl-3.5.4
+    ./Configure linux-generic32 --prefix=/workspace/rootfs/usr/local --openssldir=/workspace/rootfs/usr/local/ssl \
+        --cross-compile-prefix=arm-linux-gnueabihf- --with-zlib-include=/workspace/rootfs/usr/local/include \
+        --with-zlib-lib=/workspace/rootfs/usr/local/lib zlib-dynamic
+    make -j$(nproc)
+    make install
+
+3a. Сборка OpenSSH:
+    mkdir /workspace/rootfs/lib
+    cp /usr/arm-linux-gnueabihf/lib/ld-linux-armhf.so.3 /lib
+    cp /usr/arm-linux-gnueabihf/lib/libc.so.6 /lib
+    cp /usr/arm-linux-gnueabihf/lib/*.so* /workspace/rootfs/lib
+    wget https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.0p2.tar.gz
+    tar -xf openssh-10.0p2.tar.gz
+    cd openssh-10.0p1
+    ./configure --host=arm-linux-gnueabihf --disable-strip --prefix=/workspace/rootfs/usr/local \
+        --with-zlib=/workspace/rootfs/usr/local --with-ssl-dir=/workspace/rootfs
+    make -j$(nproc)
+    make install
+
+3б. Сборка initramfs:
+    cp -r /workspace/busybox-1.36.1/_install/* /workspace/rootfs
+    cd /workspace/rootfs
+    cp usr/local/lib/* lib/
+    mkdir ./etc
+    mkdir -p ./home/root
+    touch ./etc/group
+    touch ./etc/passwd
+    rm -r usr/local/share
+    rm -r usr/local/include
+    find . | cpio -o -H newc | gzip > /workspace/linux-6.17/initramfs.cpio.gz
+
+3в. Запуск, настройка, проверка:
+    QEMU_AUDIO_DRV=none qemu-system-arm -m 512M -M vexpress-a9 \
+        -kernel /workspace/linux-6.17/arch/arm/boot/zImage \
+        -dtb /workspace/linux-6.17/arch/arm/boot/dts/arm/vexpress-v2p-ca9.dtb \
+        -initrd /workspace/linux-6.17/initramfs.cpio.gz -nographic -append "console=ttyAMA0 rdinit=/bin/ash"
+    mknod /dev/null c 1 3; chmod 666 /dev/null; addgroup -g 0 root; adduser -u 0 -G root -D root; cd /usr/local/bin
+    uname -a
+    ./ssh -V
+    ./ssh-keygen

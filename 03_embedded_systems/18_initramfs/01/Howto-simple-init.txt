@@ -1,0 +1,22 @@
+Сборка корневой файловой системы с простым init-процессом.
+
+Среда сборки: Docker - Ubuntu 25.04 (Plucky Puffin)
+
+Команды для сборки:    
+    mkdir rootfs
+    cd rootfs
+    cat > init.c << EOF
+    #include <stdio.h>
+    #include <unistd.h>
+    int main(void)
+    {
+	    puts("Hello!");
+        sleep(15);
+        return 0;
+    }
+    EOF
+    arm-linux-gnueabihf-gcc -static -o init init.c
+    find . | cpio -o -H newc | gzip > /workspace/linux-6.17/initramfs.cpio.gz
+    QEMU_AUDIO_DRV=none qemu-system-arm -m 512M -M vexpress-a9 -kernel /workspace/linux-6.17/arch/arm/boot/zImage \
+        -dtb /workspace/linux-6.17/arch/arm/boot/dts/arm/vexpress-v2p-ca9.dtb -initrd /workspace/linux-6.17/initramfs.cpio.gz \
+        -nographic -append "console=ttyAMA0"

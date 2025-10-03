@@ -1,0 +1,12 @@
+Сборка ядра для ARMv7.
+
+Среда сборки: Docker - Ubuntu 25.04 (Plucky Puffin)
+
+Команды для сборки:
+    wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.tar.xz
+    tar -xf linux-6.17.tar.xz
+    cd linux-6.17
+    ARCH=arm make defconfig
+    ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- make -j$(nproc) zImage dtbs
+    QEMU_AUDIO_DRV=none qemu-system-arm -m 128M -M vexpress-a9 -kernel /workspace/linux-6.17/arch/arm/boot/zImage \
+        -dtb /workspace/linux-6.17/arch/arm/boot/dts/arm/vexpress-v2p-ca9.dtb -nographic -append "console=ttyAMA0"
