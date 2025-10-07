@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 
-#define INPUTBUF_SIZE 100
+#include <drivers_t.h>
 
 #define CREATE_DRIVER_S "create_driver"
 #define SEND_TASK_S "send_task"
@@ -45,5 +45,11 @@ typedef struct
     } args;
     
 } command_args_t;
+
+int create_driver(create_driver_t *args, drivers_t *drivers);
+int send_task(send_task_t *args, drivers_t *drivers);
+int get_status(get_status_t *args, drivers_t *drivers);
+int get_drivers(get_drivers_t *args, drivers_t *drivers);
+
 
 #endif

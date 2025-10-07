@@ -1,4 +1,4 @@
-TARGET = 02
+TARGET = main
 CC = gcc
 CFLAGS = -Wall
 SRCS := $(wildcard *.c)
