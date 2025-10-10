@@ -1,6 +1,6 @@
-TARGET = main
+TARGET = program
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -g
 SRCS := $(wildcard *.c)
 OBJS := $(SRCS:.c=.o)
 LIBS :=

@@ -1,12 +1,14 @@
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
-#include "input.h"
+#include "console_io.h"
+#include "exitmacro.h"
 #include "commands.h"
+#include "message_t.h"
 
 int read_line(char *line, int sz)
 {
-    printf("Command: ");
     if (fgets(line, sz, stdin) == NULL)
     {
         if (errno == EINTR)
@@ -19,11 +21,22 @@ int read_line(char *line, int sz)
 
 int parse_command(char *str, int sz, command_args_t *cmd_args)
 {
+    if (str[0] == '\0')
+        return -1;
     char *token = strtok(str, " ");
     if (strncmp(token, CREATE_DRIVER_S, sz) == 0)
     {
         cmd_args->cmd = CREATE_DRIVER;
         cmd_args->args.create_driver = (create_driver_t){};
+    }
+    else if (strncmp(token, DELETE_DRIVER_S, sz) == 0)
+    {
+        cmd_args->cmd = DELETE_DRIVER;
+        cmd_args->args.delete_driver = (delete_driver_t){};
+        token = strtok(NULL, " ");
+        if (!token)
+            return -1;
+        sscanf(token, "%d", &cmd_args->args.delete_driver.driver_pid);
     }
     else if (strncmp(token, SEND_TASK_S, sz) == 0)
     {
@@ -55,6 +68,36 @@ int parse_command(char *str, int sz, command_args_t *cmd_args)
     else
     {
         return -1;
+    }
+    return 0;
+}
+
+int read_command(command_args_t *cmd_args)
+{
+    char inputbuf[INPUTBUF_SIZE];
+    if (read_line(inputbuf, sizeof(inputbuf)) == -1)
+        return -1;
+
+    if (parse_command(inputbuf, sizeof(inputbuf), cmd_args) == -1)
+    {
+        puts("Bad command.");
+        return -1;
+    }
+    return 0;
+}
+
+int print_message(message_t *msg)
+{
+    switch (msg->msg_type)
+    {
+    case MSG_AVAIL:
+        printf("Driver (pid = %d): available.\n", msg->args.avail.pid);
+        break;
+    case MSG_BUSY:
+        printf("Driver (pid = %d): busy for %ld sec.\n", msg->args.busy.pid, msg->args.busy.busy_secs);
+        break;
+    default:
+        break;
     }
     return 0;
 }

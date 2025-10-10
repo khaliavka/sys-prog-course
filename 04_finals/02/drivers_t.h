@@ -1,5 +1,5 @@
-#ifndef DRIVERS_T
-#define DRIVERS_T
+#ifndef DRIVERS_T_H
+#define DRIVERS_T_H
 
 #include <unistd.h>
 
@@ -18,7 +18,9 @@ typedef struct
 } drivers_t;
 
 int add_driver(drivers_t *drivers, pid_t pid, int fd);
-int linsearch_driver(drivers_t *drivers, pid_t pid);
+int search_driver_by_pid(drivers_t *drivers, pid_t pid);
+int search_driver_by_fd(drivers_t *drivers, int fd);
 int remove_driver(drivers_t *drivers, int index, int (*do_cleanup)(int));
+int cleanup_drivers(drivers_t *drivers, int (*do_cleanup)(int));
 
 #endif
