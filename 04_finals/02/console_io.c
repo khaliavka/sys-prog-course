@@ -91,10 +91,10 @@ int print_message(message_t *msg)
     switch (msg->msg_type)
     {
     case MSG_AVAIL:
-        printf("Driver (pid = %d): available.\n", msg->args.avail.pid);
+        printf("Driver pid = %d: Available.\n", msg->args.avail.pid);
         break;
     case MSG_BUSY:
-        printf("Driver (pid = %d): busy for %ld sec.\n", msg->args.busy.pid, msg->args.busy.busy_secs);
+        printf("Driver pid = %d: Busy for %ld sec.\n", msg->args.busy.pid, msg->args.busy.busy_secs);
         break;
     default:
         break;

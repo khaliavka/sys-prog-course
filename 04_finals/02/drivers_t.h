@@ -20,7 +20,7 @@ typedef struct
 int add_driver(drivers_t *drivers, pid_t pid, int fd);
 int search_driver_by_pid(drivers_t *drivers, pid_t pid);
 int search_driver_by_fd(drivers_t *drivers, int fd);
-int remove_driver(drivers_t *drivers, int index, int (*do_cleanup)(int));
+int remove_driver(drivers_t *drivers, int index);
 int cleanup_drivers(drivers_t *drivers, int (*do_cleanup)(int));
 
 #endif

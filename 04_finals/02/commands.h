@@ -55,10 +55,10 @@ typedef struct
 } command_args_t;
 
 int create_driver(create_driver_t *args, drivers_t *drivers, int epollfd);
-int delete_driver(delete_driver_t *args, drivers_t *drivers, int epollfd);
+int delete_driver(delete_driver_t *args, drivers_t *drivers, drivers_t *zombies, int epollfd);
 int send_task(send_task_t *args, drivers_t *drivers);
 int get_status(get_status_t *args, drivers_t *drivers);
 int get_drivers(get_drivers_t *args, drivers_t *drivers);
-int exec_command(command_args_t *cmd_args, drivers_t *drivers, int epollfd);
+int exec_command(command_args_t *cmd_args, drivers_t *drivers, drivers_t *zombies, int epollfd);
 
 #endif

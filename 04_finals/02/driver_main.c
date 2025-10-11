@@ -18,16 +18,19 @@ int driver_main(int sockfd)
 
     driver_state_t driver_state = STATE_AVAIL;
     pid_t pid = getpid();
-    printf("Driver pid = %d created.\n", pid);
+    printf("Driver pid = %d: Created.\n", pid);
+
     int timerfd = timerfd_create(CLOCK_MONOTONIC, 0);
     if (timerfd == -1)
         err_exit("timerfd_create");
+
     int epollfd = epoll_create1(0);
     if (epollfd == -1)
         err_exit("create_epoll");
 
     epoll_add_fd(epollfd, sockfd);
     epoll_add_fd(epollfd, timerfd);
+
     while (cancel_flag == 0)
     {
         int nevents = epoll_wait(epollfd, events, DRIVER_MAX_EV, -1);
@@ -46,7 +49,7 @@ int driver_main(int sockfd)
                 {
                     if (errno == EAGAIN || errno == EINTR)
                         continue;
-                    err_exit("timer read");
+                    err_exit("timerfd read");
                 }
                 driver_state = STATE_AVAIL;
                 continue;
@@ -90,6 +93,7 @@ int driver_main(int sockfd)
     }
     close(timerfd);
     close(epollfd);
-    write(STDOUT_FILENO, "DRV exited gracefully\n", 23);
+    close(sockfd);
+    printf("Driver pid = %d: Exited gracefully\n", pid);
     return 0;
 }

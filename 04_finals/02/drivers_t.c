@@ -24,9 +24,8 @@ int search_driver_by_fd(drivers_t *drivers, int fd)
     return -1;
 }
 
-int remove_driver(drivers_t *drivers, int index, int (*do_cleanup)(int))
+int remove_driver(drivers_t *drivers, int index)
 {
-    do_cleanup(drivers->arr[index].fd);
     drivers->arr[index] = drivers->arr[drivers->count - 1];
     --drivers->count;
     return 0;

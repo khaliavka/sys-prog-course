@@ -1,6 +1,9 @@
+#include <string.h>
+#include <sys/types.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
-#include <string.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 
 #include "main_impl.h"
 #include "exitmacro.h"
@@ -21,6 +24,11 @@ int epoll_del_fd(int epollfd, int fd)
     if (epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, NULL) == -1)
         err_exit("epoll_ctl");
     return 0;
+}
+
+int pidfd_open(pid_t pid, unsigned int flags)
+{
+    return syscall(SYS_pidfd_open, pid, flags);
 }
 
 int driver_setbusy(int tfd, time_t busy_sec)

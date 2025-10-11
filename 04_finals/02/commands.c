@@ -36,16 +36,22 @@ int create_driver(create_driver_t *args, drivers_t *drivers, int epollfd)
     return 0;
 }
 
-int delete_driver(delete_driver_t *args, drivers_t *drivers, int epollfd)
+int delete_driver(delete_driver_t *args, drivers_t *drivers, drivers_t *zombies, int epollfd)
 {
     int index = search_driver_by_pid(drivers, args->driver_pid);
     if (index == -1)
         return -1;
+    int pidfd = pidfd_open(drivers->arr[index].pid, 0);
+    epoll_add_fd(epollfd, pidfd);
+    add_driver(zombies, drivers->arr[index].pid, pidfd);
+
     message_t msg = {.msg_type = MSG_DEL, .args.del = (msg_del_t){}};
     if (write(drivers->arr[index].fd, &msg, sizeof(msg)) == -1)
         err_exit("write_af_unix_sock");
+        
     epoll_del_fd(epollfd, drivers->arr[index].fd);
-    remove_driver(drivers, index, close);
+    close(drivers->arr[index].fd);
+    remove_driver(drivers, index);
     return 0;
 }
 
@@ -74,6 +80,9 @@ int get_status(get_status_t *args, drivers_t *drivers)
 int get_drivers(get_drivers_t *args, drivers_t *drivers)
 {
     (void)*args;
+    if (drivers->count == 0)
+        return -1;
+
     for (int i = 0; i < drivers->count; ++i)
     {
         message_t msg = {.msg_type = MSG_GET_STATUS, .args.get_status = (msg_get_status_t){}};
@@ -83,7 +92,7 @@ int get_drivers(get_drivers_t *args, drivers_t *drivers)
     return 0;
 }
 
-int exec_command(command_args_t *cmd_args, drivers_t *drivers, int epollfd)
+int exec_command(command_args_t *cmd_args, drivers_t *drivers, drivers_t *zombies, int epollfd)
 {
     switch (cmd_args->cmd)
     {
@@ -95,9 +104,9 @@ int exec_command(command_args_t *cmd_args, drivers_t *drivers, int epollfd)
         }
         break;
     case DELETE_DRIVER:
-        if (delete_driver(&cmd_args->args.delete_driver, drivers, epollfd) == -1)
+        if (delete_driver(&cmd_args->args.delete_driver, drivers, zombies, epollfd) == -1)
         {
-            puts("Cannot delete driver.");
+            puts("Cannot delete driver (wrong pid).");
             return -1;
         }
         break;
@@ -110,7 +119,10 @@ int exec_command(command_args_t *cmd_args, drivers_t *drivers, int epollfd)
         break;
     case GET_STATUS:
         if (get_status(&cmd_args->args.get_status, drivers) == -1)
+        {
+            puts("Wrong pid.");
             return -1;
+        }
         break;
     case GET_DRIVERS:
         if (get_drivers(&cmd_args->args.get_drivers, drivers) == -1)
